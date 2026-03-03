@@ -1,0 +1,438 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fiche Projet — Centre Léon Bérard</title>
+  <link rel="stylesheet" href="./style.css" />
+
+  <!-- PDF libs (CDN) -->
+  <script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jspdf-autotable@3.8.4/dist/jspdf.plugin.autotable.min.js"></script>
+</head>
+
+<body>
+  <div class="container">
+
+    <header class="card">
+      <div class="brand">
+        <img src="./logo-clb.png" alt="Centre Léon Bérard" class="logo" />
+        <div>
+          <h1>Fiche Projet — Centre Léon Bérard</h1>
+          <p class="small">
+            Merci de renseigner ce formulaire afin de faciliter l’analyse du projet, l’identification des ressources à mobiliser
+            et l’orientation vers les interlocuteurs adéquats (méthodologie/biostat, contractualisation, valorisation, RGPD/MR004,
+            CRB/CMT, plateformes).
+          </p>
+          <p class="small">
+            En fin de saisie, vous pourrez générer un <strong>PDF récapitulatif</strong> à transmettre pour instruction.
+          </p>
+        </div>
+      </div>
+
+      <div id="alerts" class="alerts" aria-live="polite"></div>
+
+      <div class="actions">
+        <button type="button" id="btnSave">Sauvegarder</button>
+        <button type="button" id="btnLoad">Charger</button>
+        <button type="button" id="btnReset" class="secondary">Réinitialiser</button>
+        <button type="button" id="btnPdf" class="primary">Générer PDF A4</button>
+      </div>
+
+      <p class="small">Champs requis : Titre du projet, Porteur, Email, Résumé.</p>
+      <p class="small" id="lastSaved"></p>
+    </header>
+
+    <form id="ficheForm" class="stack" autocomplete="on">
+
+      <!-- Q0 -->
+      <section class="card">
+        <h2>Q0 — Informations générales</h2>
+
+        <div class="grid2">
+          <label>
+            <span>Titre du projet <em>*</em></span>
+            <input type="text" name="titre" required />
+          </label>
+
+          <label>
+            <span>Porteur (Nom/Prénom) <em>*</em></span>
+            <input type="text" name="porteur" required />
+          </label>
+
+          <label>
+            <span>Service / unité</span>
+            <input type="text" name="unite" />
+          </label>
+
+          <label>
+            <span>Email <em>*</em></span>
+            <input type="email" name="email" required />
+          </label>
+        </div>
+
+        <label>
+          <span>Résumé / descriptif <em>*</em></span>
+          <textarea name="resume" rows="5" required></textarea>
+        </label>
+
+        <div class="grid2">
+          <label>
+            <span>Date de début (optionnel)</span>
+            <input type="date" name="date_debut" />
+          </label>
+          <label>
+            <span>Date de fin (optionnel)</span>
+            <input type="date" name="date_fin" />
+          </label>
+        </div>
+
+        <label class="checkline">
+          <input type="checkbox" name="pj" />
+          <span>Des éléments sont en pièce jointe</span>
+        </label>
+      </section>
+
+      <!-- Q1 -->
+      <section class="card">
+        <div class="sectionHead">
+          <h2>Q1 — Partenaires / International</h2>
+          <div class="scoreBox">
+            <div><strong>Score Q1</strong> <span id="q1Score">0</span>/12</div>
+            <div class="small">Vigilance : <span id="q1Vigilance">—</span></div>
+          </div>
+        </div>
+
+        <h3>Type de partenaires</h3>
+        <div class="grid3">
+          <label class="checkline"><input type="checkbox" name="p_acad" /> <span>Académique</span></label>
+          <label class="checkline"><input type="checkbox" name="p_indus" /> <span>Industriel</span></label>
+          <label class="checkline"><input type="checkbox" name="p_multi" /> <span>Multicentrique</span></label>
+        </div>
+
+        <div class="grid2">
+          <label>
+            <span>Nombre de partenaires extérieurs</span>
+            <select name="nbPart">
+              <option value="0">0</option>
+              <option value="1">1</option>
+              <option value="2-3">2–3</option>
+              <option value="4+">4+</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Coordonnateur</span>
+            <input type="text" name="coord" />
+          </label>
+        </div>
+
+        <h3>Pays / zones impliquées (choix multiples)</h3>
+        <div class="grid3">
+          <label class="checkline"><input type="checkbox" name="z_fr" /> <span>France</span></label>
+          <label class="checkline"><input type="checkbox" name="z_ueuk" /> <span>UE/UK</span></label>
+          <label class="checkline"><input type="checkbox" name="z_canada" /> <span>Canada</span></label>
+          <label class="checkline"><input type="checkbox" name="z_usau" /> <span>Australie/USA</span></label>
+          <label class="checkline"><input type="checkbox" name="z_asie" /> <span>Japon/Corée/Taiwan/Singapour</span></label>
+          <label class="checkline"><input type="checkbox" name="z_chineinde" /> <span>Chine/Inde</span></label>
+          <label class="checkline"><input type="checkbox" name="z_autres" id="z_autres" /> <span>Autres</span></label>
+        </div>
+
+        <label id="autresWrap" style="display:none;">
+          <span>Préciser (Autres)</span>
+          <input type="text" name="z_autres_txt" placeholder="Ex : Brésil, Afrique du Sud…" />
+        </label>
+      </section>
+
+      <!-- Q2 -->
+      <section class="card">
+        <div class="sectionHead">
+          <h2>Q2 — Impact médico-scientifique</h2>
+          <div class="scoreBox">
+            <div><strong>Score Q2</strong> <span id="q2Score">0</span>/6</div>
+            <div class="small">Niveau : <span id="q2Label">—</span></div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <label class="checkline"><input type="checkbox" name="pub" /> <span>Publication prévue</span></label>
+          <label class="checkline"><input type="checkbox" name="educ" /> <span>Impact éducatif (thèse/formation)</span></label>
+          <label class="checkline"><input type="checkbox" name="clin" /> <span>Application clinique à court terme</span></label>
+          <label class="checkline"><input type="checkbox" name="auteur" /> <span>Premier/dernier auteur (fort impact)</span></label>
+        </div>
+
+        <div class="grid2">
+          <label>
+            <span>Journal</span>
+            <select name="journal">
+              <option value="Aucun">Aucun</option>
+              <option value="Faible">Faible</option>
+              <option value="Intermédiaire">Intermédiaire</option>
+              <option value="Élevé">Élevé</option>
+              <option value="NSP">NSP</option>
+            </select>
+          </label>
+
+          <fieldset class="fieldset">
+            <legend>TRL (au moins un)</legend>
+            <label class="checkline"><input type="checkbox" name="trl13" /> <span>TRL 1–3</span></label>
+            <label class="checkline"><input type="checkbox" name="trl46" /> <span>TRL 4–6</span></label>
+            <label class="checkline"><input type="checkbox" name="trl6p" /> <span>TRL &gt; 6</span></label>
+          </fieldset>
+        </div>
+      </section>
+
+      <!-- Q3 -->
+      <section class="card">
+        <div class="sectionHead">
+          <h2>Q3 — Ressources / activités mobilisées</h2>
+          <div class="scoreBox">
+            <div><strong>Score Q3</strong> <span id="q3Score">0</span></div>
+            <div class="small">Niveau : <span id="q3Label">—</span></div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <div>
+            <h3>Activités (+1)</h3>
+            <div class="stack">
+              <label class="checkline"><input type="checkbox" name="act_essai" /> <span>Essai clinique</span></label>
+              <label class="checkline"><input type="checkbox" name="act_prom" /> <span>CLB promoteur</span></label>
+              <label class="checkline"><input type="checkbox" name="act_acad" /> <span>Académique</span></label>
+              <label class="checkline"><input type="checkbox" name="act_indus" /> <span>Industriel</span></label>
+              <label class="checkline"><input type="checkbox" name="act_data" /> <span>Recherche sur données/échantillons</span></label>
+              <label class="checkline"><input type="checkbox" name="act_ech" /> <span>Échanges de données/échantillons</span></label>
+              <label class="checkline"><input type="checkbox" name="act_drci" /> <span>Besoin expertise DRCI</span></label>
+              <label class="checkline"><input type="checkbox" name="act_clin" /> <span>Expertise clinicien</span></label>
+              <label class="checkline"><input type="checkbox" name="act_cher" /> <span>Expertise chercheur</span></label>
+              <label class="checkline"><input type="checkbox" name="act_st" /> <span>Sous-traitance prévue</span></label>
+              <label class="checkline"><input type="checkbox" name="act_achat" /> <span>Achat équipement prévu</span></label>
+              <label class="checkline"><input type="checkbox" name="act_eq" /> <span>Plusieurs équipes impliquées</span></label>
+              <label class="checkline"><input type="checkbox" name="act_heberg" /> <span>Personnel externe hébergé</span></label>
+              <label class="checkline"><input type="checkbox" name="act_pf" /> <span>Utilisation plateforme(s) interne(s)</span></label>
+            </div>
+          </div>
+
+          <div>
+            <h3>Plateformes (+0,5)</h3>
+            <div class="stack">
+              <label class="checkline"><input type="checkbox" name="pf_pic" /> <span>PIC</span></label>
+              <label class="checkline"><input type="checkbox" name="pf_par" /> <span>PAR</span></label>
+              <label class="checkline"><input type="checkbox" name="pf_cyto" /> <span>Cytométrie</span></label>
+              <label class="checkline"><input type="checkbox" name="pf_geno" /> <span>Génomique</span></label>
+              <label class="checkline"><input type="checkbox" name="pf_bioinfo" /> <span>Bioinformatique</span></label>
+              <label class="checkline"><input type="checkbox" name="pf_preclin" /> <span>Modèles précliniques</span></label>
+              <label class="checkline"><input type="checkbox" name="pf_autre" id="pf_autre" /> <span>Autre plateforme</span></label>
+            </div>
+
+            <label id="pfAutreWrap" style="display:none;">
+              <span>Préciser (Autre plateforme)</span>
+              <input type="text" name="pf_autre_txt" />
+            </label>
+          </div>
+        </div>
+      </section>
+
+      <!-- Q4 -->
+      <section class="card">
+        <div class="sectionHead">
+          <h2>Q4 — Financement</h2>
+          <div class="scoreBox">
+            <div><strong>Score Q4</strong> <span id="q4Score">0</span>/7</div>
+          </div>
+        </div>
+
+        <div class="grid2">
+          <label class="checkline"><input type="checkbox" name="fin_exist" /> <span>Financement existant (tout court)</span></label>
+          <label class="checkline"><input type="checkbox" name="fin_ext" /> <span>Financement extérieur</span></label>
+          <label class="checkline"><input type="checkbox" name="fin_valide" /> <span>Financement validé</span></label>
+          <label class="checkline"><input type="checkbox" name="fin_couvre" /> <span>Couvre les ressources CLB</span></label>
+          <label class="checkline"><input type="checkbox" name="fin_cp" id="fin_cp" /> <span>Chef de projet identifié</span></label>
+          <label class="checkline"><input type="checkbox" name="fin_sup" /> <span>Financement &gt; coûts estimés</span></label>
+        </div>
+
+        <label id="cpWrap" style="display:none;">
+          <span>Nom chef de projet</span>
+          <input type="text" name="fin_cp_nom" />
+        </label>
+
+        <div class="grid2">
+          <label>
+            <span>Montant financement total (€)</span>
+            <input type="number" name="fin_montant" min="0" step="100" />
+          </label>
+
+          <label>
+            <span>Frais de gestion estimés (€)</span>
+            <input type="number" name="fin_frais" min="0" step="100" />
+          </label>
+        </div>
+
+        <hr />
+
+        <h3>Appel à projet associé</h3>
+        <label class="checkline">
+          <input type="checkbox" name="aap" id="aap" />
+          <span>Appel à projet associé</span>
+        </label>
+
+        <div id="aapWrap" class="grid2" style="display:none;">
+          <label>
+            <span>Nom de l’appel à projet</span>
+            <input type="text" name="aap_nom" />
+          </label>
+          <label>
+            <span>Organisme</span>
+            <select name="aap_org">
+              <option value="">—</option>
+              <option>INCa</option>
+              <option>ANR</option>
+              <option>Europe</option>
+              <option>Fondation</option>
+              <option>Industriel</option>
+              <option>Autre</option>
+            </select>
+          </label>
+          <label>
+            <span>Date de soumission</span>
+            <input type="date" name="aap_date" />
+          </label>
+          <label>
+            <span>Statut</span>
+            <select name="aap_statut">
+              <option value="">—</option>
+              <option>soumis</option>
+              <option>accepté</option>
+              <option>refusé</option>
+              <option>en cours</option>
+            </select>
+          </label>
+        </div>
+
+        <hr />
+
+        <h3>Historique des financements</h3>
+        <div class="small">Ajoutez chaque financement connu (optionnel).</div>
+
+        <div class="actions">
+          <button type="button" id="btnAddFunding" class="secondary">Ajouter un financement</button>
+        </div>
+
+        <div class="tableWrap">
+          <table id="fundingTable">
+            <thead>
+              <tr>
+                <th>Date (mois/année)</th>
+                <th>Source</th>
+                <th>Montant (€)</th>
+                <th>Commentaire</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- Q5 -->
+      <section class="card">
+        <div class="sectionHead">
+          <h2>Q5 — Impact valorisation</h2>
+          <div class="scoreBox">
+            <div><strong>Score Q5</strong> <span id="q5Score">0</span></div>
+            <div class="small">Niveau : <span id="q5Label">—</span></div>
+          </div>
+        </div>
+
+        <h3>Brevet (on prend la valeur la plus élevée)</h3>
+        <div class="grid3">
+          <label class="checkline"><input type="checkbox" name="bv_sig" /> <span>Signature / cible (1 pt)</span></label>
+          <label class="checkline"><input type="checkbox" name="bv_mol" /> <span>Molécule (3 pts)</span></label>
+          <label class="checkline"><input type="checkbox" name="bv_aut" /> <span>Autre (2 pts)</span></label>
+        </div>
+
+        <label class="checkline">
+          <input type="checkbox" name="licence" />
+          <span>Contrat de licence (ajoute la valeur du brevet)</span>
+        </label>
+
+        <hr />
+
+        <h3>Publication / Journal</h3>
+        <div class="grid2">
+          <label class="checkline"><input type="checkbox" name="q5_pub" /> <span>Publication prévue</span></label>
+          <label class="checkline"><input type="checkbox" name="q5_auteur" /> <span>1er / dernier auteur</span></label>
+        </div>
+
+        <label>
+          <span>Niveau du journal</span>
+          <select name="q5_journal">
+            <option value="Aucun">Aucun</option>
+            <option value="Faible">Faible</option>
+            <option value="Intermédiaire">Intermédiaire</option>
+            <option value="Élevé">Élevé</option>
+            <option value="NSP">NSP</option>
+          </select>
+        </label>
+      </section>
+
+      <!-- Q6 -->
+      <section class="card">
+        <h2>Q6 — Données / échantillons (RGPD / MR004)</h2>
+
+        <div class="grid2">
+          <label class="checkline"><input type="checkbox" name="trf_ech" /> <span>Transfert d’échantillons biologiques</span></label>
+          <label class="checkline"><input type="checkbox" name="trf_data" /> <span>Transfert de données</span></label>
+          <label class="checkline"><input type="checkbox" name="trf_multi" /> <span>Multicentrique</span></label>
+        </div>
+
+        <div class="grid2">
+          <label>
+            <span>Zone destinataire</span>
+            <select name="trf_zone">
+              <option value="">—</option>
+              <option>CLB</option>
+              <option>France</option>
+              <option>UE/UK</option>
+              <option>Canada</option>
+              <option>Australie/USA</option>
+              <option>Japon/Corée/Taiwan/Singapour</option>
+              <option>Chine/Inde</option>
+              <option>Autres</option>
+            </select>
+          </label>
+
+          <label>
+            <span>Destinataire</span>
+            <input type="text" name="trf_dest" />
+          </label>
+        </div>
+
+        <label>
+          <span>Description des données/échantillons</span>
+          <textarea name="trf_desc" rows="4"></textarea>
+        </label>
+
+        <label>
+          <span>Commentaires</span>
+          <textarea name="trf_com" rows="3"></textarea>
+        </label>
+      </section>
+
+      <section class="card">
+        <h2>Validation</h2>
+        <p class="small">
+          À la fin, cliquez sur “Générer PDF A4”. Le PDF contiendra la fiche complétée, les scores et le récapitulatif des alertes.
+        </p>
+        <div class="signature">
+          <div class="sigLine"><span>Nom / Signature</span><div class="line"></div></div>
+          <div class="sigLine"><span>Date</span><div class="line"></div></div>
+        </div>
+      </section>
+
+    </form>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
