@@ -86,6 +86,7 @@ $("#btnSave").addEventListener("click", saveLocal);
 $("#btnLoad").addEventListener("click", loadLocal);
 $("#btnReset").addEventListener("click", resetAll);
 $("#btnPdf").addEventListener("click", generatePdf);
+$("#btnQ6Docs").addEventListener("click", generateQ6Documents);
 
 form.addEventListener("input", () => {
   handleConditionalFields();
@@ -154,13 +155,13 @@ function getQ6GuidanceMessage(showQ6, needMr004, needCmt) {
     return "Activez un transfert de données et/ou un transfert d’échantillons pour afficher les exigences associées.";
   }
   if (needMr004 && needCmt) {
-    return "Transfert de données et d’échantillons détecté : les volets MR004 et CMT sont requis. Le socle commun ci-dessous évite les doubles saisies.";
+    return "Transfert de données et d’échantillons détecté : les volets MR004 et CMT sont requis. Seuls les champs projet partagés sont repris automatiquement.";
   }
   if (needMr004) {
-    return "Transfert de données détecté : la fiche MR004 est requise. Les champs déjà connus du projet sont préremplis automatiquement quand c’est possible.";
+    return "Transfert de données détecté : la fiche MR004 est requise. Seuls les champs projet partagés sont repris automatiquement.";
   }
   if (needCmt) {
-    return "Transfert d’échantillons détecté : la fiche CMT est requise. Les champs projet et financement sont réutilisés automatiquement quand c’est possible.";
+    return "Transfert d’échantillons détecté : la fiche CMT est requise. Seuls les champs projet partagés sont repris automatiquement.";
   }
   return "La Q6 est ouverte car la Q3 mentionne des données ou échantillons. Cochez le ou les transferts réellement nécessaires pour afficher la fiche MR004 et/ou la fiche CMT.";
 }
@@ -174,37 +175,14 @@ function applyQ6Prefill() {
   setIfEmpty("trf_dest", canonical.destination);
   setIfEmpty("trf_zone", canonical.zone);
   setIfEmpty("q6_period", canonical.period);
-  setIfEmpty("q6_contract", canonical.contract);
   setIfEmpty("q6_objective", canonical.objective);
-  setIfEmpty("trf_desc", canonical.flowDescription);
-  setIfEmpty("trf_com", canonical.comments);
+  setIfEmpty("cmt_partnerships", canonical.partnerships);
+  setIfEmpty("cmt_funding", canonical.funding);
 
   if (canonical.siteClb && form.elements.q6_site_clb && !form.elements.q6_site_clb.checked) form.elements.q6_site_clb.checked = true;
   if (canonical.siteIhope && form.elements.q6_site_ihope && !form.elements.q6_site_ihope.checked) form.elements.q6_site_ihope.checked = true;
   if (canonical.siteOther && form.elements.q6_site_other && !form.elements.q6_site_other.checked) form.elements.q6_site_other.checked = true;
   setIfEmpty("q6_site_other_txt", canonical.siteOtherText);
-
-  setIfEmpty("mr_population_desc", canonical.populationDescription);
-  setIfEmpty("mr_population_counts", canonical.populationCounts);
-  setIfEmpty("mr_pathology", canonical.pathology);
-  setIfEmpty("mr_case", canonical.mrCase);
-  setIfEmpty("mr_flow_other", canonical.collectionTool);
-  setIfEmpty("mr_data_other", canonical.dataOther);
-  setIfEmpty("mr_information_mode", canonical.informationMode);
-  setIfEmpty("mr_contract_status", canonical.contractStatus);
-  setIfEmpty("mr_ethics_need", canonical.ethicsNeed);
-  setIfEmpty("mr_pseudonymisation", canonical.pseudonymisation);
-
-  if (canonical.populationPatients && form.elements.mr_population_patients && !form.elements.mr_population_patients.checked) form.elements.mr_population_patients.checked = true;
-  if (canonical.populationProfessionals && form.elements.mr_population_pros && !form.elements.mr_population_pros.checked) form.elements.mr_population_pros.checked = true;
-  if (canonical.dataSamples && form.elements.mr_data_samples && !form.elements.mr_data_samples.checked) form.elements.mr_data_samples.checked = true;
-
-  setIfEmpty("cmt_partnerships", canonical.partnerships);
-  setIfEmpty("cmt_funding", canonical.funding);
-  setIfEmpty("cmt_summary", canonical.cmtSummary);
-  setIfEmpty("cmt_data_objective", canonical.objective);
-  setIfEmpty("cmt_data_list", canonical.cmtDataList);
-  setIfEmpty("cmt_sample_pathology", canonical.pathology);
 
   if (q6SiteOtherWrap) q6SiteOtherWrap.style.display = q6SiteOther?.checked ? "block" : "none";
   if (mrPopulationOtherWrap) mrPopulationOtherWrap.style.display = mrPopulationOther?.checked ? "block" : "none";
@@ -706,17 +684,8 @@ function applyDataToForm(d) {
 ---------------------------- */
 async function generatePdf() {
   // basic required check
-  const d = getFormData();
-  const missing = [];
-  if (!String(d.titre || "").trim()) missing.push("Titre du projet");
-  if (!String(d.porteur || "").trim()) missing.push("Porteur");
-  if (!String(d.email || "").trim()) missing.push("Email");
-  if (!String(d.resume || "").trim()) missing.push("Résumé");
-
-  if (missing.length) {
-    alert("Champs requis manquants :\n- " + missing.join("\n- "));
-    return;
-  }
+  const d = requireCoreProjectData();
+  if (!d) return;
 
   const q1 = computeQ1(d);
   const q2 = computeQ2(d);
@@ -992,6 +961,190 @@ async function generatePdf() {
   doc.save(filename);
 }
 
+async function generateQ6Documents() {
+  const d = requireCoreProjectData();
+  if (!d) return;
+
+  if (!d.trf_data && !d.trf_ech) {
+    alert("Cochez d'abord 'Transfert de données' et/ou 'Transfert d'échantillons biologiques' dans la Q6.");
+    return;
+  }
+
+  if (d.trf_data) await generateMr004Pdf(d);
+  if (d.trf_ech) await generateCmtPdf(d);
+}
+
+function requireCoreProjectData() {
+  const d = getFormData();
+  const missing = [];
+  if (!String(d.titre || "").trim()) missing.push("Titre du projet");
+  if (!String(d.porteur || "").trim()) missing.push("Porteur");
+  if (!String(d.email || "").trim()) missing.push("Email");
+  if (!String(d.resume || "").trim()) missing.push("Résumé");
+
+  if (missing.length) {
+    alert("Champs requis manquants :\n- " + missing.join("\n- "));
+    return null;
+  }
+  return d;
+}
+
+async function generateMr004Pdf(d = getFormData()) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  await tryAddLogoToPdf(doc);
+
+  let y = 14;
+  doc.setFontSize(15);
+  doc.text("Declaration d'un traitement de donnees - MR004", 14, y);
+  y += 6;
+  doc.setFontSize(10);
+  doc.text("Version PDF issue de la fiche projet CLB", 14, y);
+
+  doc.autoTable({
+    startY: y + 6,
+    head: [["Informations generales", ""]],
+    body: [
+      ["Date de la fiche", new Date().toLocaleDateString("fr-FR")],
+      ["Titre du projet", safe(d.titre)],
+      ["Porteur / responsable scientifique", safe(d.porteur)],
+      ["Email", safe(d.email)],
+      ["Unite / etablissement", safe(d.unite)],
+      ["Partenaires / coordination", [partnerTypesText(d), safe(d.coord)].filter(v => v !== "—").join(" ; ") || "—"],
+      ["Sites concernes", q6SitesSelectedText(d)],
+      ["Periode concernee", safe(d.q6_period || derivePeriod(d))],
+      ["Zone destinataire / hebergement", safe(d.trf_zone || deriveZoneFromMainForm(d))],
+      ["Resume / finalite du projet", safe(d.resume)],
+    ],
+    styles: { fontSize: 9, cellPadding: 2 },
+    headStyles: { fillColor: [245,245,245] },
+    columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
+    didParseCell: (data) => { data.cell.styles.valign = "top"; }
+  });
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 5,
+    head: [["Description scientifique du projet", ""]],
+    body: [
+      ["Objectif du traitement", safe(d.q6_objective || d.resume)],
+      ["Population concernee", mrPopulationSelectedText(d)],
+      ["Description de la population", safe(d.mr_population_desc)],
+      ["Nombre concerne / nombre CLB", safe(d.mr_population_counts)],
+      ["Type de tumeur / pathologie", safe(d.mr_pathology)],
+      ["Description generale des flux", safe(d.trf_desc)],
+    ],
+    styles: { fontSize: 9, cellPadding: 2 },
+    headStyles: { fillColor: [245,245,245] },
+    columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
+    didParseCell: (data) => { data.cell.styles.valign = "top"; }
+  });
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 5,
+    head: [["Description RGPD et securite", ""]],
+    body: [
+      ["Cas MR004 / categorisation", safe(d.mr_case)],
+      ["Mode de circulation des donnees", mrFlowSelectedText(d, d.mr_flow_other)],
+      ["Categories de donnees traitees", mrDataSelectedText(d, d.mr_data_other)],
+      ["Fondement juridique", safe(d.mr_legal_basis)],
+      ["Duree de conservation", [safe(d.mr_retention), safe(d.mr_retention_detail)].filter(v => v !== "—").join(" — ") || "—"],
+      ["Donnees sensibles", [safe(d.mr_sensitive), safe(d.mr_sensitive_detail)].filter(v => v !== "—").join(" — ") || "—"],
+      ["Pseudonymisation", safe(d.mr_pseudonymisation)],
+      ["Mesures de securite / commentaires", safe(d.trf_com)],
+      ["Contrat redige / validation juridique", safe(d.mr_contract_status)],
+      ["Besoin de certification RGPD / avis ethique", safe(d.mr_ethics_need)],
+    ],
+    styles: { fontSize: 9, cellPadding: 2 },
+    headStyles: { fillColor: [245,245,245] },
+    columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
+    didParseCell: (data) => { data.cell.styles.valign = "top"; }
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 14;
+  doc.text("Signature porteur :", 14, finalY);
+  doc.line(45, finalY, 120, finalY);
+  doc.text("Date :", 135, finalY);
+  doc.line(147, finalY, 195, finalY);
+
+  doc.save(`MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`);
+}
+
+async function generateCmtPdf(d = getFormData()) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  await tryAddLogoToPdf(doc);
+
+  let y = 14;
+  doc.setFontSize(15);
+  doc.text("Fiche CMT - Demande d'echantillons", 14, y);
+  y += 6;
+  doc.setFontSize(10);
+  doc.text("Version PDF issue de la fiche projet CLB", 14, y);
+
+  doc.autoTable({
+    startY: y + 6,
+    head: [["En-tete projet", ""]],
+    body: [
+      ["Date de la demande", new Date().toLocaleDateString("fr-FR")],
+      ["Titre du projet", safe(d.titre)],
+      ["Porteur(s)", safe(d.porteur)],
+      ["Laboratoire / Etablissement", safe(d.unite)],
+      ["Coordonnees", safe(d.email)],
+      ["Collaborations / partenariats", safe(d.cmt_partnerships) !== "—" ? safe(d.cmt_partnerships) : ([partnerTypesText(d), safe(d.coord)].filter(v => v !== "—").join(" ; ") || "—")],
+      ["Clinicien implique", safe(d.cmt_clinician)],
+      ["Financement du projet", safe(d.cmt_funding)],
+    ],
+    styles: { fontSize: 9, cellPadding: 2 },
+    headStyles: { fillColor: [245,245,245] },
+    columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
+    didParseCell: (data) => { data.cell.styles.valign = "top"; }
+  });
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 5,
+    head: [["Description precise des echantillons demandes", ""]],
+    body: [
+      ["Type d'echantillon", safe(d.cmt_sample_type)],
+      ["Organe / localisation", safe(d.cmt_sample_site)],
+      ["Pathologie", safe(d.cmt_sample_pathology)],
+      ["Nombre", safe(d.cmt_sample_count)],
+      ["Criteres clinico-biologiques", safe(d.cmt_criteria_clinical)],
+      ["Criteres quantitatifs / qualitatifs", safe(d.cmt_criteria_quality)],
+      ["A apparier", d.cmt_matching ? "Oui" : "Non"],
+      ["Autre precision de selection", safe(d.cmt_selection_note)],
+    ],
+    styles: { fontSize: 9, cellPadding: 2 },
+    headStyles: { fillColor: [245,245,245] },
+    columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
+    didParseCell: (data) => { data.cell.styles.valign = "top"; }
+  });
+
+  doc.autoTable({
+    startY: doc.lastAutoTable.finalY + 5,
+    head: [["Projet, donnees associees et ethique", ""]],
+    body: [
+      ["Resume CMT / rationnel / analyses prevues", safe(d.cmt_summary) !== "—" ? safe(d.cmt_summary) : safe(d.resume)],
+      ["Donnees associees a collecter", safe(d.cmt_data_list)],
+      ["Objectif du traitement de donnees", safe(d.cmt_data_objective)],
+      ["Impact ethique", safe(d.cmt_ethics_impact)],
+      ["Plateformes / expertises sollicitees", cmtPlatformsSelectedText(d)],
+      ["Commentaires complementaires", safe(d.trf_com)],
+    ],
+    styles: { fontSize: 9, cellPadding: 2 },
+    headStyles: { fillColor: [245,245,245] },
+    columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
+    didParseCell: (data) => { data.cell.styles.valign = "top"; }
+  });
+
+  const finalY = doc.lastAutoTable.finalY + 14;
+  doc.text("Avis CMT / signature :", 14, finalY);
+  doc.line(49, finalY, 125, finalY);
+  doc.text("Date :", 138, finalY);
+  doc.line(150, finalY, 195, finalY);
+
+  doc.save(`CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`);
+}
+
 /* ---------------------------
    PDF helpers
 ---------------------------- */
@@ -1060,6 +1213,15 @@ function zonesSelectedText(d) {
   if (d.z_chineinde) labels.push("Chine/Inde");
   if (d.z_autres) labels.push("Autres");
   return labels.join(", ") || "—";
+}
+
+function partnerTypesText(d) {
+  const out = [
+    d.p_acad ? "Academique" : null,
+    d.p_indus ? "Industriel" : null,
+    d.p_multi ? "Multicentrique" : null,
+  ].filter(Boolean);
+  return out.join(", ") || "—";
 }
 
 function activitiesSelectedText() {
