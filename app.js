@@ -65,6 +65,19 @@ const finCp = $("#fin_cp");
 const aapWrap = $("#aapWrap");
 const aap = $("#aap");
 const q6Section = $("#q6Section");
+const q6Guidance = $("#q6Guidance");
+const mr004Block = $("#mr004Block");
+const cmtBlock = $("#cmtBlock");
+const mr004StateEl = $("#mr004State");
+const cmtStateEl = $("#cmtState");
+const q6SiteOther = $("#q6_site_other");
+const q6SiteOtherWrap = $("#q6SiteOtherWrap");
+const mrPopulationOther = $("#mr_population_other");
+const mrPopulationOtherWrap = $("#mrPopulationOtherWrap");
+const mrRetentionWrap = $("#mrRetentionWrap");
+const mrSensitiveWrap = $("#mrSensitiveWrap");
+const cmtPfOther = $("#cmt_pf_other");
+const cmtPfOtherWrap = $("#cmtPfOtherWrap");
 
 const fundingTableBody = $("#fundingTable tbody");
 
@@ -92,15 +105,234 @@ function handleConditionalFields() {
 
   const showQ6 = !!(form.elements.act_data?.checked || form.elements.act_ech?.checked);
   if (q6Section) q6Section.style.display = showQ6 ? "block" : "none";
+  if (q6SiteOtherWrap) q6SiteOtherWrap.style.display = q6SiteOther?.checked ? "block" : "none";
+  if (mrPopulationOtherWrap) mrPopulationOtherWrap.style.display = mrPopulationOther?.checked ? "block" : "none";
+  if (mrRetentionWrap) mrRetentionWrap.style.display = form.elements.mr_retention?.value === "Durée spécifique" ? "block" : "none";
+  if (mrSensitiveWrap) mrSensitiveWrap.style.display = form.elements.mr_sensitive?.value === "Oui" ? "block" : "none";
+  if (cmtPfOtherWrap) cmtPfOtherWrap.style.display = cmtPfOther?.checked ? "block" : "none";
+
+  const needMr004 = !!form.elements.trf_data?.checked;
+  const needCmt = !!form.elements.trf_ech?.checked;
+
+  if (mr004Block) mr004Block.style.display = needMr004 ? "block" : "none";
+  if (cmtBlock) cmtBlock.style.display = needCmt ? "block" : "none";
+  if (mr004StateEl) mr004StateEl.textContent = needMr004 ? "requise" : "non requise";
+  if (cmtStateEl) cmtStateEl.textContent = needCmt ? "requise" : "non requise";
+  if (q6Guidance) q6Guidance.textContent = getQ6GuidanceMessage(showQ6, needMr004, needCmt);
 
   if (!showQ6) {
-    ["trf_ech", "trf_data", "trf_multi"].forEach((name) => {
+    [
+      "trf_ech", "trf_data", "trf_multi",
+      "q6_site_clb", "q6_site_ihope", "q6_site_other",
+      "mr_population_patients", "mr_population_aidants", "mr_population_pros", "mr_population_other",
+      "mr_flow_ecrf", "mr_flow_owncloud", "mr_flow_mss",
+      "mr_data_pathology", "mr_data_treatments", "mr_data_genetics", "mr_data_imaging", "mr_data_slides", "mr_data_samples",
+      "cmt_matching",
+      "cmt_pf_biopath", "cmt_pf_par", "cmt_pf_pgeb", "cmt_pf_onco3d", "cmt_pf_pgc", "cmt_pf_pgt", "cmt_pf_licl", "cmt_pf_pathec", "cmt_pf_other"
+    ].forEach((name) => {
       if (form.elements[name]) form.elements[name].checked = false;
     });
-    ["trf_zone", "trf_dest", "trf_desc", "trf_com"].forEach((name) => {
+    [
+      "trf_zone", "trf_dest", "trf_desc", "trf_com",
+      "q6_resp_scientifique", "q6_contact", "q6_site_other_txt", "q6_period", "q6_contract", "q6_objective",
+      "mr_population_other_txt", "mr_population_desc", "mr_population_counts", "mr_pathology", "mr_case", "mr_flow_other",
+      "mr_data_other", "mr_legal_basis", "mr_retention", "mr_retention_detail", "mr_sensitive", "mr_information_mode",
+      "mr_sensitive_detail", "mr_pseudonymisation", "mr_contract_status", "mr_ethics_need",
+      "cmt_clinician", "cmt_partnerships", "cmt_funding", "cmt_selection_note", "cmt_sample_type", "cmt_sample_site",
+      "cmt_sample_pathology", "cmt_sample_count", "cmt_criteria_clinical", "cmt_criteria_quality", "cmt_summary",
+      "cmt_data_list", "cmt_data_objective", "cmt_ethics_impact", "cmt_pf_other_txt"
+    ].forEach((name) => {
       if (form.elements[name]) form.elements[name].value = "";
     });
   }
+
+  if (showQ6) applyQ6Prefill();
+}
+
+function getQ6GuidanceMessage(showQ6, needMr004, needCmt) {
+  if (!showQ6) {
+    return "Activez un transfert de données et/ou un transfert d’échantillons pour afficher les exigences associées.";
+  }
+  if (needMr004 && needCmt) {
+    return "Transfert de données et d’échantillons détecté : les volets MR004 et CMT sont requis. Le socle commun ci-dessous évite les doubles saisies.";
+  }
+  if (needMr004) {
+    return "Transfert de données détecté : la fiche MR004 est requise. Les champs déjà connus du projet sont préremplis automatiquement quand c’est possible.";
+  }
+  if (needCmt) {
+    return "Transfert d’échantillons détecté : la fiche CMT est requise. Les champs projet et financement sont réutilisés automatiquement quand c’est possible.";
+  }
+  return "La Q6 est ouverte car la Q3 mentionne des données ou échantillons. Cochez le ou les transferts réellement nécessaires pour afficher la fiche MR004 et/ou la fiche CMT.";
+}
+
+function applyQ6Prefill() {
+  const d = getFormData();
+  const canonical = buildCanonicalQ6Data(d);
+
+  setIfEmpty("q6_resp_scientifique", canonical.scientificLead);
+  setIfEmpty("q6_contact", canonical.operationalContact);
+  setIfEmpty("trf_dest", canonical.destination);
+  setIfEmpty("trf_zone", canonical.zone);
+  setIfEmpty("q6_period", canonical.period);
+  setIfEmpty("q6_contract", canonical.contract);
+  setIfEmpty("q6_objective", canonical.objective);
+  setIfEmpty("trf_desc", canonical.flowDescription);
+  setIfEmpty("trf_com", canonical.comments);
+
+  if (canonical.siteClb && form.elements.q6_site_clb && !form.elements.q6_site_clb.checked) form.elements.q6_site_clb.checked = true;
+  if (canonical.siteIhope && form.elements.q6_site_ihope && !form.elements.q6_site_ihope.checked) form.elements.q6_site_ihope.checked = true;
+  if (canonical.siteOther && form.elements.q6_site_other && !form.elements.q6_site_other.checked) form.elements.q6_site_other.checked = true;
+  setIfEmpty("q6_site_other_txt", canonical.siteOtherText);
+
+  setIfEmpty("mr_population_desc", canonical.populationDescription);
+  setIfEmpty("mr_population_counts", canonical.populationCounts);
+  setIfEmpty("mr_pathology", canonical.pathology);
+  setIfEmpty("mr_case", canonical.mrCase);
+  setIfEmpty("mr_flow_other", canonical.collectionTool);
+  setIfEmpty("mr_data_other", canonical.dataOther);
+  setIfEmpty("mr_information_mode", canonical.informationMode);
+  setIfEmpty("mr_contract_status", canonical.contractStatus);
+  setIfEmpty("mr_ethics_need", canonical.ethicsNeed);
+  setIfEmpty("mr_pseudonymisation", canonical.pseudonymisation);
+
+  if (canonical.populationPatients && form.elements.mr_population_patients && !form.elements.mr_population_patients.checked) form.elements.mr_population_patients.checked = true;
+  if (canonical.populationProfessionals && form.elements.mr_population_pros && !form.elements.mr_population_pros.checked) form.elements.mr_population_pros.checked = true;
+  if (canonical.dataSamples && form.elements.mr_data_samples && !form.elements.mr_data_samples.checked) form.elements.mr_data_samples.checked = true;
+
+  setIfEmpty("cmt_partnerships", canonical.partnerships);
+  setIfEmpty("cmt_funding", canonical.funding);
+  setIfEmpty("cmt_summary", canonical.cmtSummary);
+  setIfEmpty("cmt_data_objective", canonical.objective);
+  setIfEmpty("cmt_data_list", canonical.cmtDataList);
+  setIfEmpty("cmt_sample_pathology", canonical.pathology);
+
+  if (q6SiteOtherWrap) q6SiteOtherWrap.style.display = q6SiteOther?.checked ? "block" : "none";
+  if (mrPopulationOtherWrap) mrPopulationOtherWrap.style.display = mrPopulationOther?.checked ? "block" : "none";
+}
+
+function setIfEmpty(name, value) {
+  if (value === undefined || value === null || value === "") return;
+  const el = form.elements[name];
+  if (!el || el.type === "checkbox") return;
+  if (!String(el.value || "").trim()) el.value = value;
+}
+
+function buildCanonicalQ6Data(d) {
+  const zone = deriveZoneFromMainForm(d);
+  const partnerTypes = [
+    d.p_acad ? "académique" : null,
+    d.p_indus ? "industriel" : null,
+    d.p_multi ? "multicentrique" : null,
+  ].filter(Boolean).join(", ");
+
+  const fundingBits = [
+    d.fin_exist ? "financement existant" : null,
+    d.fin_ext ? "financement extérieur" : null,
+    d.fin_valide ? "financement validé" : null,
+    d.fin_montant ? `${formatEuros(d.fin_montant)}` : null,
+  ].filter(Boolean);
+
+  const objective = [
+    d.resume ? d.resume.trim() : "",
+    d.clin ? "Application clinique à court terme." : "",
+    d.pub ? "Valorisation scientifique attendue." : "",
+  ].filter(Boolean).join(" ");
+
+  const flowParts = [
+    d.act_data ? "Recherche sur données/échantillons" : null,
+    d.act_ech ? "Échanges de données/échantillons" : null,
+    d.trf_multi || d.p_multi ? "Projet multi-sites / multicentrique" : null,
+    d.coord ? `Coordination: ${d.coord}` : null,
+  ].filter(Boolean);
+
+  const comments = [
+    d.aap ? `AAP: ${[d.aap_nom, d.aap_org, d.aap_statut].filter(Boolean).join(" / ")}` : null,
+    d.fin_cp_nom ? `Chef de projet: ${d.fin_cp_nom}` : null,
+  ].filter(Boolean).join(" | ");
+
+  return {
+    scientificLead: d.porteur || "",
+    operationalContact: [d.porteur, d.email].filter(Boolean).join(" — "),
+    destination: d.coord || "",
+    zone,
+    period: derivePeriod(d),
+    contract: deriveContract(d),
+    objective,
+    flowDescription: flowParts.join(" ; "),
+    comments,
+    siteClb: true,
+    siteIhope: false,
+    siteOther: d.z_autres || d.nbPart !== "0",
+    siteOtherText: d.z_autres_txt || "",
+    populationDescription: derivePopulationDescription(d),
+    populationCounts: "",
+    pathology: "",
+    mrCase: deriveMrCase(d),
+    collectionTool: deriveCollectionTool(d),
+    dataOther: d.trf_desc || "",
+    informationMode: d.pub ? "Notice d’information / information des personnes à prévoir" : "",
+    contractStatus: deriveContract(d),
+    ethicsNeed: d.trf_ech ? "Coordination avec le CMT si transfert d’échantillons" : "",
+    pseudonymisation: "A confirmer : pseudonymisation des données, limitation des accès et stockage sur des outils sécurisés.",
+    populationPatients: true,
+    populationProfessionals: false,
+    dataSamples: !!(d.trf_ech || d.act_ech),
+    partnerships: [partnerTypes, d.coord].filter(Boolean).join(" ; "),
+    funding: fundingBits.join(" ; "),
+    cmtSummary: d.resume || "",
+    cmtDataList: deriveCmtDataList(d),
+  };
+}
+
+function deriveZoneFromMainForm(d) {
+  if (d.trf_zone) return d.trf_zone;
+  if (d.z_autres) return "Autres";
+  if (d.z_chineinde) return "Chine/Inde";
+  if (d.z_asie) return "Japon/Corée/Taiwan/Singapour";
+  if (d.z_usau) return "Australie/USA";
+  if (d.z_canada) return "Canada";
+  if (d.z_ueuk) return "UE/UK";
+  if (d.z_fr) return "France";
+  return "";
+}
+
+function derivePeriod(d) {
+  if (d.date_debut || d.date_fin) return [d.date_debut || "?", d.date_fin || "?"].join(" → ");
+  return "";
+}
+
+function deriveContract(d) {
+  if (d.aap || d.p_indus || d.act_st) {
+    return [d.p_indus ? "partenariat industriel" : null, d.act_st ? "sous-traitance" : null, d.aap ? `AAP ${d.aap_nom || ""}`.trim() : null]
+      .filter(Boolean)
+      .join(" ; ");
+  }
+  return "";
+}
+
+function derivePopulationDescription(d) {
+  if (d.clin || d.act_essai) return "Patients inclus dans le projet / l’étude";
+  return "Population à confirmer";
+}
+
+function deriveMrCase(d) {
+  if (d.p_multi || d.trf_multi) return "Cas multicentrique à préciser";
+  if (d.p_indus) return "Cas avec partenaire industriel";
+  if (d.p_acad) return "Cas avec partenaire académique";
+  return "Cas interne CLB à confirmer";
+}
+
+function deriveCollectionTool(d) {
+  if (d.act_data) return "Outil de recueil / hébergeur à confirmer (ex. Excel sécurisé, REDCap CLB, e-CRF)";
+  return "";
+}
+
+function deriveCmtDataList(d) {
+  const items = [];
+  if (d.act_data || d.trf_data) items.push("données cliniques associées");
+  if (d.act_cher) items.push("données de recherche / analyses prévues");
+  if (d.p_multi) items.push("données issues de plusieurs sites");
+  return items.join(", ");
 }
 
 /* ---------------------------
@@ -122,7 +354,13 @@ function getFormData() {
     "fin_exist","fin_ext","fin_valide","fin_couvre","fin_cp",
     "aap",
     "bv_sig","bv_mol","bv_aut","licence",
-    "trf_ech","trf_data","trf_multi"
+    "trf_ech","trf_data","trf_multi",
+    "q6_site_clb","q6_site_ihope","q6_site_other",
+    "mr_population_patients","mr_population_aidants","mr_population_pros","mr_population_other",
+    "mr_flow_ecrf","mr_flow_owncloud","mr_flow_mss",
+    "mr_data_pathology","mr_data_treatments","mr_data_genetics","mr_data_imaging","mr_data_slides","mr_data_samples",
+    "cmt_matching",
+    "cmt_pf_biopath","cmt_pf_par","cmt_pf_pgeb","cmt_pf_onco3d","cmt_pf_pgc","cmt_pf_pgt","cmt_pf_licl","cmt_pf_pathec","cmt_pf_other"
   ];
   checkNames.forEach((n) => (obj[n] = !!form.elements[n]?.checked));
 
@@ -663,21 +901,83 @@ async function generatePdf() {
   if (d.act_data || d.act_ech) {
     doc.autoTable({
       startY: doc.lastAutoTable.finalY + 6,
-      head: [["Q6 — Données / échantillons (RGPD / MR004)", ""]],
+      head: [["Q6 — Données / échantillons (socle commun)", ""]],
       body: [
         ["Transfert échantillons", d.trf_ech ? "Oui" : "Non"],
         ["Transfert données", d.trf_data ? "Oui" : "Non"],
         ["Multicentrique", d.trf_multi ? "Oui" : "Non"],
+        ["Responsable scientifique CLB", safe(d.q6_resp_scientifique)],
+        ["Acteur opérationnel / contact", safe(d.q6_contact)],
+        ["Sites source", q6SitesSelectedText(d)],
         ["Zone destinataire", safe(d.trf_zone)],
         ["Destinataire", safe(d.trf_dest)],
-        ["Description", safe(d.trf_desc)],
-        ["Commentaires", safe(d.trf_com)],
+        ["Période concernée", safe(d.q6_period)],
+        ["Contrat / support juridique", safe(d.q6_contract)],
+        ["Objectif du traitement", safe(d.q6_objective)],
+        ["Description des flux", safe(d.trf_desc)],
+        ["Commentaires / sécurité", safe(d.trf_com)],
       ],
       styles: { fontSize: 9, cellPadding: 2 },
       headStyles: { fillColor: [245,245,245] },
       columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
       didParseCell: (data) => { data.cell.styles.valign = "top"; }
     });
+
+    if (d.trf_data) {
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 4,
+        head: [["MR004 — Champs spécifiques", ""]],
+        body: [
+          ["Population", mrPopulationSelectedText(d)],
+          ["Description population", safe(d.mr_population_desc)],
+          ["Nombre concerné / CLB", safe(d.mr_population_counts)],
+          ["Pathologie / tumeur", safe(d.mr_pathology)],
+          ["Cas MR004", safe(d.mr_case)],
+          ["Circulation / recueil", mrFlowSelectedText(d, d.mr_flow_other)],
+          ["Catégories de données", mrDataSelectedText(d, d.mr_data_other)],
+          ["Fondement juridique", safe(d.mr_legal_basis)],
+          ["Conservation", [safe(d.mr_retention), safe(d.mr_retention_detail)].filter(v => v !== "—").join(" — ") || "—"],
+          ["Données sensibles", [safe(d.mr_sensitive), safe(d.mr_sensitive_detail)].filter(v => v !== "—").join(" — ") || "—"],
+          ["Information des personnes", safe(d.mr_information_mode)],
+          ["Pseudonymisation", safe(d.mr_pseudonymisation)],
+          ["Contrat / juridique", safe(d.mr_contract_status)],
+          ["Certificat / avis éthique", safe(d.mr_ethics_need)],
+        ],
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [245,245,245] },
+        columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
+        didParseCell: (data) => { data.cell.styles.valign = "top"; }
+      });
+    }
+
+    if (d.trf_ech) {
+      doc.autoTable({
+        startY: doc.lastAutoTable.finalY + 4,
+        head: [["CMT — Champs spécifiques", ""]],
+        body: [
+          ["Clinicien impliqué", safe(d.cmt_clinician)],
+          ["Collaborations / partenariats", safe(d.cmt_partnerships)],
+          ["Financement", safe(d.cmt_funding)],
+          ["Précision sélection", safe(d.cmt_selection_note)],
+          ["Type d’échantillon", safe(d.cmt_sample_type)],
+          ["Organe / localisation", safe(d.cmt_sample_site)],
+          ["Pathologie", safe(d.cmt_sample_pathology)],
+          ["Nombre demandé", safe(d.cmt_sample_count)],
+          ["Critères clinico-biologiques", safe(d.cmt_criteria_clinical)],
+          ["Critères quantitatifs / qualitatifs", safe(d.cmt_criteria_quality)],
+          ["Appariement", d.cmt_matching ? "Oui" : "Non"],
+          ["Résumé CMT", safe(d.cmt_summary)],
+          ["Données associées", safe(d.cmt_data_list)],
+          ["Objectif traitement associé", safe(d.cmt_data_objective)],
+          ["Impact éthique", safe(d.cmt_ethics_impact)],
+          ["Plateformes / expertises", cmtPlatformsSelectedText(d)],
+        ],
+        styles: { fontSize: 9, cellPadding: 2 },
+        headStyles: { fillColor: [245,245,245] },
+        columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
+        didParseCell: (data) => { data.cell.styles.valign = "top"; }
+      });
+    }
   }
 
   // Signature lines at the end
@@ -792,6 +1092,63 @@ function platformsSelectedText(d) {
     ["pf_autre","Autre"],
   ];
   const out = map.filter(([k]) => d[k]).map(([,lbl]) => lbl);
+  return out.join(", ") || "—";
+}
+
+function q6SitesSelectedText(d) {
+  const out = [
+    d.q6_site_clb ? "CLB" : null,
+    d.q6_site_ihope ? "IHOPe" : null,
+    d.q6_site_other ? (d.q6_site_other_txt || "Autre site") : null,
+  ].filter(Boolean);
+  return out.join(", ") || "—";
+}
+
+function mrPopulationSelectedText(d) {
+  const out = [
+    d.mr_population_patients ? "Patients" : null,
+    d.mr_population_aidants ? "Aidants" : null,
+    d.mr_population_pros ? "Professionnels de santé" : null,
+    d.mr_population_other ? (d.mr_population_other_txt || "Autre") : null,
+  ].filter(Boolean);
+  return out.join(", ") || "—";
+}
+
+function mrFlowSelectedText(d, other) {
+  const out = [
+    d.mr_flow_ecrf ? "e-CRF" : null,
+    d.mr_flow_owncloud ? "Owncloud CLB" : null,
+    d.mr_flow_mss ? "MSS / monSISRA" : null,
+    other || null,
+  ].filter(Boolean);
+  return out.join(", ") || "—";
+}
+
+function mrDataSelectedText(d, other) {
+  const out = [
+    d.mr_data_pathology ? "Pathologie" : null,
+    d.mr_data_treatments ? "Traitements" : null,
+    d.mr_data_genetics ? "Génétiques" : null,
+    d.mr_data_imaging ? "Imagerie" : null,
+    d.mr_data_slides ? "Lames anapath" : null,
+    d.mr_data_samples ? "Échantillons biologiques" : null,
+    other || null,
+  ].filter(Boolean);
+  return out.join(", ") || "—";
+}
+
+function cmtPlatformsSelectedText(d) {
+  const out = [
+    d.cmt_pf_biopath ? "BIOPATH" : null,
+    d.cmt_pf_par ? "PAR" : null,
+    d.cmt_pf_pgeb ? "PGEB" : null,
+    d.cmt_pf_onco3d ? "Onco-3D" : null,
+    d.cmt_pf_pgc ? "PGC" : null,
+    d.cmt_pf_pgt ? "PGT" : null,
+    d.cmt_pf_licl ? "LICL" : null,
+    d.cmt_pf_pathec ? "PATHEC" : null,
+    d.cmt_pf_other ? (d.cmt_pf_other_txt || "Autre expertise") : null,
+  ].filter(Boolean);
   return out.join(", ") || "—";
 }
 

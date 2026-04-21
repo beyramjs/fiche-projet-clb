@@ -96,6 +96,12 @@ h3{
   color: #0f172a;
 }
 
+h4{
+  margin: 14px 0 8px;
+  font-size: 14px;
+  color: #0f172a;
+}
+
 /* Required marker */
 em{
   color: var(--clb-pink);
@@ -218,6 +224,32 @@ input:focus, select:focus, textarea:focus{
 .scoreBox #q3Label,
 .scoreBox #q5Label{
   font-weight: 700;
+}
+
+.subcard{
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(229,231,235,.95);
+  border-radius: 16px;
+  background:
+    linear-gradient(180deg, rgba(11,59,140,.03), rgba(225,29,138,.02)),
+    #fff;
+}
+
+.infoBox{
+  margin: 10px 0 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  border: 1px solid rgba(29,78,216,.18);
+  background: rgba(29,78,216,.06);
+  color: #1e3a8a;
+  line-height: 1.45;
+}
+
+.infoBox.warn{
+  border-color: rgba(146,64,14,.22);
+  background: var(--warnBg);
+  color: var(--warn);
 }
 
 /* Buttons */

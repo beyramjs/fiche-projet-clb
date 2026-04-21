@@ -351,18 +351,357 @@
 
       <!-- Q6 -->
       <section class="card" id="q6Section" style="display:none;">
+        <div class="sectionHead">
+          <h2>Q6 — Données / échantillons (MR004 / CMT)</h2>
+          <div class="scoreBox">
+            <div><strong>MR004</strong> <span id="mr004State">non requise</span></div>
+            <div class="small"><strong>CMT</strong> <span id="cmtState">non requise</span></div>
+          </div>
+        </div>
+
+        <div id="q6Guidance" class="infoBox">
+          Activez un transfert de données et/ou un transfert d’échantillons pour afficher les exigences associées.
+        </div>
+
+        <h3>Déclencheurs</h3>
+        <div class="grid2">
+          <label class="checkline"><input type="checkbox" name="trf_data" /> <span>Transfert de données</span></label>
+          <label class="checkline"><input type="checkbox" name="trf_ech" /> <span>Transfert d’échantillons biologiques</span></label>
+          <label class="checkline"><input type="checkbox" name="trf_multi" /> <span>Projet multicentrique / multi-sites</span></label>
+        </div>
+
+        <div class="subcard">
+          <h3>Socle commun mutualisé</h3>
+          <p class="small">
+            Cette partie est partagée entre la fiche principale, la MR004 et la CMT. Les informations déjà saisies plus haut sont réutilisées automatiquement quand elles existent.
+          </p>
+
+          <div class="grid2">
+            <label>
+              <span>Destinataire / partenaire / centre coordinateur</span>
+              <input type="text" name="trf_dest" />
+            </label>
+
+            <label>
+              <span>Zone destinataire / hébergement principal</span>
+              <select name="trf_zone">
+                <option value="">—</option>
+                <option>CLB</option>
+                <option>France</option>
+                <option>UE/UK</option>
+                <option>Canada</option>
+                <option>Australie/USA</option>
+                <option>Japon/Corée/Taiwan/Singapour</option>
+                <option>Chine/Inde</option>
+                <option>Autres</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Responsable scientifique CLB</span>
+              <input type="text" name="q6_resp_scientifique" />
+            </label>
+
+            <label>
+              <span>Acteur opérationnel / contact</span>
+              <input type="text" name="q6_contact" />
+            </label>
+          </div>
+
+          <div class="grid3">
+            <label class="checkline"><input type="checkbox" name="q6_site_clb" /> <span>Données / échantillons issus du CLB</span></label>
+            <label class="checkline"><input type="checkbox" name="q6_site_ihope" /> <span>Données / échantillons issus de l’IHOPe</span></label>
+            <label class="checkline"><input type="checkbox" name="q6_site_other" id="q6_site_other" /> <span>Autre site / établissement</span></label>
+          </div>
+
+          <label id="q6SiteOtherWrap" style="display:none;">
+            <span>Préciser l’autre site / établissement</span>
+            <input type="text" name="q6_site_other_txt" />
+          </label>
+
+          <div class="grid2">
+            <label>
+              <span>Période concernée</span>
+              <input type="text" name="q6_period" placeholder="Ex : 2018–2025" />
+            </label>
+
+            <label>
+              <span>Contrat / support juridique existant</span>
+              <input type="text" name="q6_contract" placeholder="Ex : MTA, DTA, collaboration, consortium..." />
+            </label>
+          </div>
+
+          <label>
+            <span>Objectif du traitement / finalité opérationnelle</span>
+            <textarea name="q6_objective" rows="3"></textarea>
+          </label>
+
+          <label>
+            <span>Description générale des flux, données et/ou échantillons concernés</span>
+            <textarea name="trf_desc" rows="4"></textarea>
+          </label>
+
+          <label>
+            <span>Mesures de sécurité, remarques et commentaires</span>
+            <textarea name="trf_com" rows="3"></textarea>
+          </label>
+        </div>
+
+        <section class="subcard" id="mr004Block" style="display:none;">
+          <h3>Fiche MR004 — Traitement de données</h3>
+          <div class="infoBox warn">
+            La fiche MR004 doit être complétée. Les informations projet, porteur, unité, email, résumé, coordination, partenaires, période et sites sont réutilisées automatiquement quand elles sont déjà présentes dans le formulaire principal.
+          </div>
+
+          <div class="grid3">
+            <label class="checkline"><input type="checkbox" name="mr_population_patients" /> <span>Population : patients</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_population_aidants" /> <span>Population : aidants</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_population_pros" /> <span>Population : professionnels de santé</span></label>
+          </div>
+
+          <label class="checkline">
+            <input type="checkbox" name="mr_population_other" id="mr_population_other" />
+            <span>Autre population concernée</span>
+          </label>
+
+          <label id="mrPopulationOtherWrap" style="display:none;">
+            <span>Préciser l’autre population</span>
+            <input type="text" name="mr_population_other_txt" />
+          </label>
+
+          <div class="grid2">
+            <label>
+              <span>Description de la population</span>
+              <textarea name="mr_population_desc" rows="3"></textarea>
+            </label>
+
+            <label>
+              <span>Nombre concerné / dont nombre CLB</span>
+              <input type="text" name="mr_population_counts" placeholder="Ex : 250 au total, 140 CLB" />
+            </label>
+
+            <label>
+              <span>Type de tumeur / pathologie</span>
+              <input type="text" name="mr_pathology" />
+            </label>
+
+            <label>
+              <span>Cas MR004 / catégorisation (1 à 6 ou autre)</span>
+              <input type="text" name="mr_case" placeholder="Ex : cas 2 multicentrique CLB" />
+            </label>
+          </div>
+
+          <div class="grid3">
+            <label class="checkline"><input type="checkbox" name="mr_flow_ecrf" /> <span>Données saisies dans l’e-CRF du responsable</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_flow_owncloud" /> <span>Plateforme d’échanges sécurisés CLB</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_flow_mss" /> <span>MSS / monSISRA</span></label>
+          </div>
+
+          <label>
+            <span>Autre mode de circulation / outil de recueil / hébergeur</span>
+            <textarea name="mr_flow_other" rows="2"></textarea>
+          </label>
+
+          <div class="grid3">
+            <label class="checkline"><input type="checkbox" name="mr_data_pathology" /> <span>Données de pathologie</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_data_treatments" /> <span>Données de traitements</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_data_genetics" /> <span>Données génétiques</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_data_imaging" /> <span>Données d’imagerie</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_data_slides" /> <span>Lames virtuelles d’anapath</span></label>
+            <label class="checkline"><input type="checkbox" name="mr_data_samples" /> <span>Échantillons biologiques humains</span></label>
+          </div>
+
+          <label>
+            <span>Autres catégories de données / schéma général des données</span>
+            <textarea name="mr_data_other" rows="3"></textarea>
+          </label>
+
+          <div class="grid2">
+            <label>
+              <span>Fondement juridique</span>
+              <select name="mr_legal_basis">
+                <option value="">—</option>
+                <option>Mission d’intérêt public</option>
+                <option>Intérêt légitime</option>
+                <option>Obligation légale</option>
+                <option>Autre</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Durée de conservation</span>
+              <select name="mr_retention">
+                <option value="">—</option>
+                <option>Consigne CNIL</option>
+                <option>Durée spécifique</option>
+              </select>
+            </label>
+          </div>
+
+          <label id="mrRetentionWrap" style="display:none;">
+            <span>Justification de la durée spécifique</span>
+            <textarea name="mr_retention_detail" rows="2"></textarea>
+          </label>
+
+          <div class="grid2">
+            <label>
+              <span>Données sensibles au-delà des données de santé</span>
+              <select name="mr_sensitive">
+                <option value="">—</option>
+                <option>Non</option>
+                <option>Oui</option>
+              </select>
+            </label>
+
+            <label>
+              <span>Mode d’information des personnes concernées</span>
+              <input type="text" name="mr_information_mode" placeholder="Ex : note d’information, remise patient, notice écrite..." />
+            </label>
+          </div>
+
+          <label id="mrSensitiveWrap" style="display:none;">
+            <span>Détail des données sensibles et justification</span>
+            <textarea name="mr_sensitive_detail" rows="3"></textarea>
+          </label>
+
+          <label>
+            <span>Pseudonymisation / mesures de sécurité spécifiques</span>
+            <textarea name="mr_pseudonymisation" rows="3"></textarea>
+          </label>
+
+          <div class="grid2">
+            <label>
+              <span>Contrat rédigé / validation juridique CLB</span>
+              <input type="text" name="mr_contract_status" />
+            </label>
+
+            <label>
+              <span>Besoin de certificat RGPD / avis éthique</span>
+              <input type="text" name="mr_ethics_need" placeholder="Ex : certification RGPD FR/EN, avis éthique..." />
+            </label>
+          </div>
+        </section>
+
+        <section class="subcard" id="cmtBlock" style="display:none;">
+          <h3>Fiche CMT — Transfert / sélection d’échantillons</h3>
+          <div class="infoBox warn">
+            La fiche CMT doit être complétée. Les éléments projet, porteur, établissement, collaborations, financement, résumé et objectif du traitement sont réutilisés automatiquement pour éviter les doubles saisies.
+          </div>
+
+          <div class="grid2">
+            <label>
+              <span>Clinicien impliqué</span>
+              <input type="text" name="cmt_clinician" />
+            </label>
+
+            <label>
+              <span>Collaborations / partenariats</span>
+              <input type="text" name="cmt_partnerships" />
+            </label>
+
+            <label>
+              <span>Financement du projet / prise en charge CRB</span>
+              <input type="text" name="cmt_funding" />
+            </label>
+
+            <label>
+              <span>Autre précision utile pour la sélection</span>
+              <input type="text" name="cmt_selection_note" />
+            </label>
+          </div>
+
+          <div class="grid2">
+            <label>
+              <span>Type d’échantillon</span>
+              <input type="text" name="cmt_sample_type" />
+            </label>
+
+            <label>
+              <span>Organe / localisation</span>
+              <input type="text" name="cmt_sample_site" />
+            </label>
+
+            <label>
+              <span>Pathologie</span>
+              <input type="text" name="cmt_sample_pathology" />
+            </label>
+
+            <label>
+              <span>Nombre demandé</span>
+              <input type="text" name="cmt_sample_count" />
+            </label>
+          </div>
+
+          <div class="grid2">
+            <label>
+              <span>Critères clinico-biologiques</span>
+              <textarea name="cmt_criteria_clinical" rows="2"></textarea>
+            </label>
+
+            <label>
+              <span>Critères quantitatifs / qualitatifs</span>
+              <textarea name="cmt_criteria_quality" rows="2"></textarea>
+            </label>
+          </div>
+
+          <label class="checkline">
+            <input type="checkbox" name="cmt_matching" />
+            <span>Échantillons à apparier / associer à des données complémentaires</span>
+          </label>
+
+          <label>
+            <span>Résumé CMT : rationnel, finalité, analyses prévues</span>
+            <textarea name="cmt_summary" rows="4"></textarea>
+          </label>
+
+          <label>
+            <span>Données associées à collecter en plus des critères de sélection</span>
+            <textarea name="cmt_data_list" rows="3"></textarea>
+          </label>
+
+          <label>
+            <span>Objectif du traitement de données associé</span>
+            <textarea name="cmt_data_objective" rows="3"></textarea>
+          </label>
+
+          <label>
+            <span>Impact éthique potentiel pour le patient ou la société</span>
+            <textarea name="cmt_ethics_impact" rows="3"></textarea>
+          </label>
+
+          <h4>Plateformes / expertises sollicitées</h4>
+          <div class="grid3">
+            <label class="checkline"><input type="checkbox" name="cmt_pf_biopath" /> <span>BIOPATH</span></label>
+            <label class="checkline"><input type="checkbox" name="cmt_pf_par" /> <span>PAR</span></label>
+            <label class="checkline"><input type="checkbox" name="cmt_pf_pgeb" /> <span>PGEB</span></label>
+            <label class="checkline"><input type="checkbox" name="cmt_pf_onco3d" /> <span>Onco-3D</span></label>
+            <label class="checkline"><input type="checkbox" name="cmt_pf_pgc" /> <span>PGC</span></label>
+            <label class="checkline"><input type="checkbox" name="cmt_pf_pgt" /> <span>PGT</span></label>
+            <label class="checkline"><input type="checkbox" name="cmt_pf_licl" /> <span>LICL</span></label>
+            <label class="checkline"><input type="checkbox" name="cmt_pf_pathec" /> <span>PATHEC</span></label>
+            <label class="checkline"><input type="checkbox" name="cmt_pf_other" id="cmt_pf_other" /> <span>Autre expertise</span></label>
+          </div>
+
+          <label id="cmtPfOtherWrap" style="display:none;">
+            <span>Préciser l’autre expertise / plateforme</span>
+            <input type="text" name="cmt_pf_other_txt" />
+          </label>
+        </section>
+      </section>
+
+      <section class="card" id="q6LegacySection" style="display:none;">
         <h2>Q6 — Données / échantillons (RGPD / MR004)</h2>
 
         <div class="grid2">
-          <label class="checkline"><input type="checkbox" name="trf_ech" /> <span>Transfert d’échantillons biologiques</span></label>
-          <label class="checkline"><input type="checkbox" name="trf_data" /> <span>Transfert de données</span></label>
-          <label class="checkline"><input type="checkbox" name="trf_multi" /> <span>Multicentrique</span></label>
+          <label class="checkline"><input type="checkbox" name="legacy_trf_ech" /> <span>Transfert d’échantillons biologiques</span></label>
+          <label class="checkline"><input type="checkbox" name="legacy_trf_data" /> <span>Transfert de données</span></label>
+          <label class="checkline"><input type="checkbox" name="legacy_trf_multi" /> <span>Multicentrique</span></label>
         </div>
 
         <div class="grid2">
           <label>
             <span>Zone destinataire</span>
-            <select name="trf_zone">
+            <select name="legacy_trf_zone">
               <option value="">—</option>
               <option>CLB</option>
               <option>France</option>
@@ -377,18 +716,18 @@
 
           <label>
             <span>Destinataire</span>
-            <input type="text" name="trf_dest" />
+            <input type="text" name="legacy_trf_dest" />
           </label>
         </div>
 
         <label>
           <span>Description des données/échantillons</span>
-          <textarea name="trf_desc" rows="4"></textarea>
+          <textarea name="legacy_trf_desc" rows="4"></textarea>
         </label>
 
         <label>
           <span>Commentaires</span>
-          <textarea name="trf_com" rows="3"></textarea>
+          <textarea name="legacy_trf_com" rows="3"></textarea>
         </label>
       </section>
 
