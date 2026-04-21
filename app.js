@@ -19,8 +19,8 @@ const Q3_LABEL_THRESHOLDS = [
 
 const Q5_LABEL_THRESHOLDS = [
   { max: 1, label: "faible" },
-  { max: 4, label: "modérée" },
-  { max: 7, label: "forte" },
+  { max: 3, label: "modérée" },
+  { max: 5, label: "forte" },
   { max: Infinity, label: "très forte" },
 ];
 
@@ -64,6 +64,7 @@ const finCp = $("#fin_cp");
 
 const aapWrap = $("#aapWrap");
 const aap = $("#aap");
+const q6Section = $("#q6Section");
 
 const fundingTableBody = $("#fundingTable tbody");
 
@@ -88,6 +89,18 @@ function handleConditionalFields() {
   pfAutreWrap.style.display = pfAutre?.checked ? "block" : "none";
   cpWrap.style.display = finCp?.checked ? "block" : "none";
   aapWrap.style.display = aap?.checked ? "grid" : "none";
+
+  const showQ6 = !!(form.elements.act_data?.checked || form.elements.act_ech?.checked);
+  if (q6Section) q6Section.style.display = showQ6 ? "block" : "none";
+
+  if (!showQ6) {
+    ["trf_ech", "trf_data", "trf_multi"].forEach((name) => {
+      if (form.elements[name]) form.elements[name].checked = false;
+    });
+    ["trf_zone", "trf_dest", "trf_desc", "trf_com"].forEach((name) => {
+      if (form.elements[name]) form.elements[name].value = "";
+    });
+  }
 }
 
 /* ---------------------------
@@ -103,12 +116,12 @@ function getFormData() {
     "pj",
     "p_acad","p_indus","p_multi",
     "z_fr","z_ueuk","z_canada","z_usau","z_asie","z_chineinde","z_autres",
-    "pub","educ","clin","auteur","trl13","trl46","trl6p",
-    "act_essai","act_prom","act_acad","act_indus","act_data","act_ech","act_drci","act_clin","act_cher","act_st","act_achat","act_eq","act_heberg","act_pf",
+    "pub","educ","clin","auteur",
+    "act_essai","act_prom","act_data","act_ech","act_drci","act_clin","act_cher","act_st","act_achat","act_eq","act_heberg","act_pf",
     "pf_pic","pf_par","pf_cyto","pf_geno","pf_bioinfo","pf_preclin","pf_autre",
-    "fin_exist","fin_ext","fin_valide","fin_couvre","fin_cp","fin_sup",
+    "fin_exist","fin_ext","fin_valide","fin_couvre","fin_cp",
     "aap",
-    "bv_sig","bv_mol","bv_aut","licence","q5_pub","q5_auteur",
+    "bv_sig","bv_mol","bv_aut","licence",
     "trf_ech","trf_data","trf_multi"
   ];
   checkNames.forEach((n) => (obj[n] = !!form.elements[n]?.checked));
@@ -179,7 +192,7 @@ function computeQ1(d) {
 }
 
 /* ---------------------------
-   Q2: score exact /6
+   Q2: score exact /5
 ---------------------------- */
 function computeQ2(d) {
   let s = 0;
@@ -188,13 +201,11 @@ function computeQ2(d) {
   if (d.clin) s += 1;
   if (d.auteur) s += 1;
   if ((d.journal || "Aucun") !== "Aucun") s += 1;
-  const trlAny = d.trl13 || d.trl46 || d.trl6p;
-  if (trlAny) s += 1;
 
   let label = "—";
   if (s <= 1) label = "Impact faible";
   else if (s <= 3) label = "Impact modéré";
-  else if (s <= 5) label = "Impact élevé";
+  else if (s <= 4) label = "Impact élevé";
   else label = "Impact très élevé";
 
   return { score: s, label };
@@ -214,16 +225,15 @@ function computeQ3(d) {
 }
 
 /* ---------------------------
-   Q4: score exact /7
+   Q4: score exact /6
 ---------------------------- */
 function computeQ4(d) {
   let s = 0;
-  // 5 cases clés
+  // 4 cases clés
   if (d.fin_ext) s += 1;
   if (d.fin_valide) s += 1;
   if (d.fin_couvre) s += 1;
   if (d.fin_cp) s += 1;
-  if (d.fin_sup) s += 1;
 
   // montant
   if (d.fin_montant > 0 && d.fin_montant < 30000) s += 1;
@@ -244,18 +254,10 @@ function computeQ5(d) {
 
   // 2) Contrat licence
   let contrat = d.licence ? brevet : 0;
-
-  // 3) Publication + auteur (auteur seulement si publication)
-  let pub = d.q5_pub ? 1 : 0;
-  let aut = (d.q5_pub && d.q5_auteur) ? 1 : 0;
-
-  // 4) Journal
-  let jour = ((d.q5_journal || "Aucun") !== "Aucun") ? 1 : 0;
-
-  const score = brevet + contrat + pub + aut + jour;
+  const score = brevet + contrat;
   const label = labelFromThresholds(score, Q5_LABEL_THRESHOLDS);
 
-  return { score, label, brevet, contrat, pub, aut, jour };
+  return { score, label, brevet, contrat };
 }
 
 /* ---------------------------
@@ -508,7 +510,7 @@ async function generatePdf() {
 
   // Summary box (scores)
   doc.setFontSize(11);
-  doc.text(`Scores :  Q1 ${q1.total}/12  |  Q2 ${q2.score}/6 (${q2.label})  |  Q3 ${q3.score} (${q3.label})  |  Q4 ${q4.score}/7  |  Q5 ${q5.score} (${q5.label})`, 14, y);
+  doc.text(`Scores :  Q1 ${q1.total}/12  |  Q2 ${q2.score}/5 (${q2.label})  |  Q3 ${q3.score} (${q3.label})  |  Q4 ${q4.score}/6  |  Q5 ${q5.score} (${q5.label})`, 14, y);
   y += 6;
 
   // Alerts
@@ -575,8 +577,7 @@ async function generatePdf() {
       ["Application clinique CT", d.clin ? "Oui" : "Non"],
       ["1er/dernier auteur", d.auteur ? "Oui" : "Non"],
       ["Journal", safe(d.journal)],
-      ["TRL", [d.trl13 ? "TRL 1–3" : null, d.trl46 ? "TRL 4–6" : null, d.trl6p ? "TRL >6" : null].filter(Boolean).join(", ") || "—"],
-      ["Score Q2", `${q2.score}/6 — ${q2.label}`],
+      ["Score Q2", `${q2.score}/5 — ${q2.label}`],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
     headStyles: { fillColor: [245,245,245] },
@@ -611,10 +612,9 @@ async function generatePdf() {
       ["Couvre ressources CLB", d.fin_couvre ? "Oui" : "Non"],
       ["Chef de projet identifié", d.fin_cp ? "Oui" : "Non"],
       ["Nom chef de projet", d.fin_cp ? safe(d.fin_cp_nom) : "—"],
-      ["Financement > coûts", d.fin_sup ? "Oui" : "Non"],
       ["Montant total (€)", formatEuros(d.fin_montant)],
       ["Frais de gestion (€)", formatEuros(d.fin_frais)],
-      ["Score Q4", `${q4.score}/7`],
+      ["Score Q4", `${q4.score}/6`],
       ["Appel à projet associé", d.aap ? "Oui" : "Non"],
       ["AAP — Nom", d.aap ? safe(d.aap_nom) : "—"],
       ["AAP — Organisme", d.aap ? safe(d.aap_org) : "—"],
@@ -651,9 +651,6 @@ async function generatePdf() {
     body: [
       ["Brevet (MAX)", `Signature/cible=${d.bv_sig ? "Oui" : "Non"} | Molécule=${d.bv_mol ? "Oui" : "Non"} | Autre=${d.bv_aut ? "Oui" : "Non"} (valeur retenue=${q5.brevet})`],
       ["Contrat licence", d.licence ? `Oui (+${q5.brevet})` : "Non"],
-      ["Publication", d.q5_pub ? "Oui (+1)" : "Non"],
-      ["1er/dernier auteur", (d.q5_pub && d.q5_auteur) ? "Oui (+1)" : "Non"],
-      ["Journal ≠ Aucun", (d.q5_journal !== "Aucun") ? "Oui (+1)" : "Non"],
       ["Score Q5", `${q5.score} — ${q5.label}`],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
@@ -663,23 +660,25 @@ async function generatePdf() {
   });
 
   // Q6 table
-  doc.autoTable({
-    startY: doc.lastAutoTable.finalY + 6,
-    head: [["Q6 — Données / échantillons (RGPD / MR004)", ""]],
-    body: [
-      ["Transfert échantillons", d.trf_ech ? "Oui" : "Non"],
-      ["Transfert données", d.trf_data ? "Oui" : "Non"],
-      ["Multicentrique", d.trf_multi ? "Oui" : "Non"],
-      ["Zone destinataire", safe(d.trf_zone)],
-      ["Destinataire", safe(d.trf_dest)],
-      ["Description", safe(d.trf_desc)],
-      ["Commentaires", safe(d.trf_com)],
-    ],
-    styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
-    columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
-    didParseCell: (data) => { data.cell.styles.valign = "top"; }
-  });
+  if (d.act_data || d.act_ech) {
+    doc.autoTable({
+      startY: doc.lastAutoTable.finalY + 6,
+      head: [["Q6 — Données / échantillons (RGPD / MR004)", ""]],
+      body: [
+        ["Transfert échantillons", d.trf_ech ? "Oui" : "Non"],
+        ["Transfert données", d.trf_data ? "Oui" : "Non"],
+        ["Multicentrique", d.trf_multi ? "Oui" : "Non"],
+        ["Zone destinataire", safe(d.trf_zone)],
+        ["Destinataire", safe(d.trf_dest)],
+        ["Description", safe(d.trf_desc)],
+        ["Commentaires", safe(d.trf_com)],
+      ],
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [245,245,245] },
+      columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
+      didParseCell: (data) => { data.cell.styles.valign = "top"; }
+    });
+  }
 
   // Signature lines at the end
   const finalY = doc.lastAutoTable.finalY + 12;
@@ -767,8 +766,6 @@ function activitiesSelectedText() {
   const map = [
     ["act_essai","Essai clinique"],
     ["act_prom","CLB promoteur"],
-    ["act_acad","Académique"],
-    ["act_indus","Industriel"],
     ["act_data","Recherche données/échantillons"],
     ["act_ech","Échanges données/échantillons"],
     ["act_drci","Besoin expertise DRCI"],
