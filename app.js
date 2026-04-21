@@ -1181,7 +1181,9 @@ async function tryAddLogoToPdf(doc) {
     if (!imgEl.complete) await new Promise(res => imgEl.addEventListener("load", res, { once: true }));
     const dataUrl = imageToDataUrl(imgEl);
     if (!dataUrl) return;
-    doc.addImage(dataUrl, "PNG", 170, 10, 25, 25);
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(168, 4, 24, 24, 2, 2, "F");
+    doc.addImage(dataUrl, "PNG", 169, 5, 22, 22);
   } catch {
     // ignore if fails
   }
@@ -1328,6 +1330,7 @@ function ensurePageSpace(doc, y, needed = 18) {
 
 function drawDocTitle(doc, y, title, subtitle = "") {
   y = ensurePageSpace(doc, y, 22);
+  doc.setTextColor(20, 24, 32);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(15);
   doc.text(title, 14, y);
@@ -1345,6 +1348,7 @@ function drawDocTitle(doc, y, title, subtitle = "") {
 
 function drawIntroBox(doc, y, text) {
   y = ensurePageSpace(doc, y, 18);
+  doc.setTextColor(20, 24, 32);
   const lines = doc.splitTextToSize(text, 176);
   const h = 6 + lines.length * 4.4;
   doc.roundedRect(14, y, 182, h, 2, 2);
@@ -1359,6 +1363,7 @@ function drawSectionHeader(doc, y, title) {
   doc.setFillColor(236, 239, 244);
   doc.rect(14, y, 182, 8, "F");
   doc.rect(14, y, 182, 8);
+  doc.setTextColor(20, 24, 32);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(11);
   doc.text(title, 17, y + 5.5);
@@ -1367,6 +1372,7 @@ function drawSectionHeader(doc, y, title) {
 
 function drawFieldBox(doc, y, label, value = "", height = 12) {
   y = ensurePageSpace(doc, y, height + 8);
+  doc.setTextColor(20, 24, 32);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(9.2);
   doc.text(label, 14, y);
@@ -1383,6 +1389,7 @@ function drawFieldBox(doc, y, label, value = "", height = 12) {
 
 function drawTwoColumnFields(doc, y, fields) {
   y = ensurePageSpace(doc, y, 20);
+  doc.setTextColor(20, 24, 32);
   const colW = 88;
   const gap = 6;
   const x1 = 14;
@@ -1404,6 +1411,7 @@ function drawTwoColumnFields(doc, y, fields) {
 }
 
 function drawGridTable(doc, y, headers, rows, widths) {
+  doc.setTextColor(20, 24, 32);
   doc.autoTable({
     startY: y,
     head: [headers],
@@ -1418,6 +1426,7 @@ function drawGridTable(doc, y, headers, rows, widths) {
 
 function drawSignatureArea(doc, y, title) {
   y = ensurePageSpace(doc, y, 20);
+  doc.setTextColor(20, 24, 32);
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
   doc.text(title, 14, y);
