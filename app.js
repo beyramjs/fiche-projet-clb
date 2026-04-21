@@ -744,7 +744,7 @@ async function generatePdf() {
       ["Résumé / descriptif", safe(d.resume)],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 45 }, 1: { cellWidth: 140 } },
     didParseCell: (data) => {
       data.cell.styles.valign = "top";
@@ -769,7 +769,7 @@ async function generatePdf() {
       ["Autres (préciser)", d.z_autres ? safe(d.z_autres_txt) : "—"],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -787,7 +787,7 @@ async function generatePdf() {
       ["Score Q2", `${q2.score}/5 — ${q2.label}`],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -803,7 +803,7 @@ async function generatePdf() {
       ["Autre plateforme (préciser)", d.pf_autre ? safe(d.pf_autre_txt) : "—"],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -829,7 +829,7 @@ async function generatePdf() {
       ["AAP — Statut", d.aap ? safe(d.aap_statut) : "—"],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -848,7 +848,7 @@ async function generatePdf() {
     body: fundingRows.length ? fundingRows : [["—", "—", "—", ""]],
     theme: "grid",
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] }
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] }
   });
 
   // Q5 table
@@ -861,7 +861,7 @@ async function generatePdf() {
       ["Score Q5", `${q5.score} — ${q5.label}`],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -887,7 +887,7 @@ async function generatePdf() {
         ["Commentaires / sécurité", safe(d.trf_com)],
       ],
       styles: { fontSize: 9, cellPadding: 2 },
-      headStyles: { fillColor: [245,245,245] },
+      headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
       columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
       didParseCell: (data) => { data.cell.styles.valign = "top"; }
     });
@@ -913,7 +913,7 @@ async function generatePdf() {
           ["Certificat / avis éthique", safe(d.mr_ethics_need)],
         ],
         styles: { fontSize: 9, cellPadding: 2 },
-        headStyles: { fillColor: [245,245,245] },
+        headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
         columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
         didParseCell: (data) => { data.cell.styles.valign = "top"; }
       });
@@ -942,7 +942,7 @@ async function generatePdf() {
           ["Plateformes / expertises", cmtPlatformsSelectedText(d)],
         ],
         styles: { fontSize: 9, cellPadding: 2 },
-        headStyles: { fillColor: [245,245,245] },
+        headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
         columnStyles: { 0: { cellWidth: 55 }, 1: { cellWidth: 130 } },
         didParseCell: (data) => { data.cell.styles.valign = "top"; }
       });
@@ -1017,7 +1017,7 @@ async function generateMr004Pdf(d = getFormData()) {
       ["Resume / finalite du projet", safe(d.resume)],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -1034,7 +1034,7 @@ async function generateMr004Pdf(d = getFormData()) {
       ["Description generale des flux", safe(d.trf_desc)],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -1055,7 +1055,7 @@ async function generateMr004Pdf(d = getFormData()) {
       ["Besoin de certification RGPD / avis ethique", safe(d.mr_ethics_need)],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -1095,7 +1095,7 @@ async function generateCmtPdf(d = getFormData()) {
       ["Financement du projet", safe(d.cmt_funding)],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -1114,7 +1114,7 @@ async function generateCmtPdf(d = getFormData()) {
       ["Autre precision de selection", safe(d.cmt_selection_note)],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -1131,7 +1131,7 @@ async function generateCmtPdf(d = getFormData()) {
       ["Commentaires complementaires", safe(d.trf_com)],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
-    headStyles: { fillColor: [245,245,245] },
+    headStyles: { fillColor: [245,245,245], textColor: [15,23,42] },
     columnStyles: { 0: { cellWidth: 58 }, 1: { cellWidth: 127 } },
     didParseCell: (data) => { data.cell.styles.valign = "top"; }
   });
@@ -1312,6 +1312,243 @@ function cmtPlatformsSelectedText(d) {
     d.cmt_pf_other ? (d.cmt_pf_other_txt || "Autre expertise") : null,
   ].filter(Boolean);
   return out.join(", ") || "—";
+}
+
+function initFormDoc(doc) {
+  doc.setDrawColor(120, 128, 140);
+  doc.setTextColor(20, 24, 32);
+  doc.setLineWidth(0.25);
+}
+
+function ensurePageSpace(doc, y, needed = 18) {
+  if (y + needed <= 280) return y;
+  doc.addPage();
+  return 14;
+}
+
+function drawDocTitle(doc, y, title, subtitle = "") {
+  y = ensurePageSpace(doc, y, 22);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(15);
+  doc.text(title, 14, y);
+  if (subtitle) {
+    y += 6;
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text(subtitle, 14, y);
+  }
+  doc.setLineWidth(0.5);
+  doc.line(14, y + 4, 196, y + 4);
+  doc.setLineWidth(0.25);
+  return y + 8;
+}
+
+function drawIntroBox(doc, y, text) {
+  y = ensurePageSpace(doc, y, 18);
+  const lines = doc.splitTextToSize(text, 176);
+  const h = 6 + lines.length * 4.4;
+  doc.roundedRect(14, y, 182, h, 2, 2);
+  doc.setFont("helvetica", "normal");
+  doc.setFontSize(9.5);
+  doc.text(lines, 18, y + 5);
+  return y + h + 5;
+}
+
+function drawSectionHeader(doc, y, title) {
+  y = ensurePageSpace(doc, y, 12);
+  doc.setFillColor(236, 239, 244);
+  doc.rect(14, y, 182, 8, "F");
+  doc.rect(14, y, 182, 8);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(11);
+  doc.text(title, 17, y + 5.5);
+  return y + 11;
+}
+
+function drawFieldBox(doc, y, label, value = "", height = 12) {
+  y = ensurePageSpace(doc, y, height + 8);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(9.2);
+  doc.text(label, 14, y);
+  const top = y + 2;
+  doc.rect(14, top, 182, height);
+  if (String(value || "").trim() && value !== "—") {
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    const lines = doc.splitTextToSize(String(value), 174);
+    doc.text(lines, 17, top + 5);
+  }
+  return top + height + 5;
+}
+
+function drawTwoColumnFields(doc, y, fields) {
+  y = ensurePageSpace(doc, y, 20);
+  const colW = 88;
+  const gap = 6;
+  const x1 = 14;
+  const x2 = x1 + colW + gap;
+  fields.slice(0, 2).forEach(([label, value], idx) => {
+    const x = idx === 0 ? x1 : x2;
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(9.2);
+    doc.text(label, x, y);
+    doc.rect(x, y + 2, colW, 11);
+    if (String(value || "").trim() && value !== "—") {
+      doc.setFont("helvetica", "normal");
+      doc.setFontSize(9);
+      const lines = doc.splitTextToSize(String(value), colW - 6);
+      doc.text(lines, x + 3, y + 7);
+    }
+  });
+  return y + 18;
+}
+
+function drawGridTable(doc, y, headers, rows, widths) {
+  doc.autoTable({
+    startY: y,
+    head: [headers],
+    body: rows,
+    styles: { fontSize: 8.2, cellPadding: 2, valign: "top", lineColor: [120,128,140], lineWidth: 0.15 },
+    headStyles: { fillColor: [236,239,244], textColor: [15,23,42], fontStyle: "bold", lineColor: [120,128,140] },
+    columnStyles: Object.fromEntries(widths.map((w, i) => [i, { cellWidth: w }])),
+    theme: "grid",
+  });
+  return doc.lastAutoTable.finalY;
+}
+
+function drawSignatureArea(doc, y, title) {
+  y = ensurePageSpace(doc, y, 20);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(10);
+  doc.text(title, 14, y);
+  doc.setFont("helvetica", "normal");
+  doc.text("Date :", 138, y);
+  doc.line(45, y, 122, y);
+  doc.line(150, y, 195, y);
+  return y + 10;
+}
+
+async function generateMr004Pdf(d = getFormData()) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  await tryAddLogoToPdf(doc);
+  initFormDoc(doc);
+
+  let y = 14;
+  y = drawDocTitle(doc, y, "Déclaration d'un traitement de données", "MR004 / analyse simplifiée des risques");
+  y = drawIntroBox(doc, y, "A renseigner et à transmettre au DPD du CLB. Cette version PDF cherche à retrouver la logique et la mise en page des fiches d'origine avec de grands blocs de réponse.");
+
+  y = drawSectionHeader(doc, y, "Fiche de traitement de données");
+  y = drawTwoColumnFields(doc, y, [
+    ["Date d'envoi de la fiche au DPD", new Date().toLocaleDateString("fr-FR")],
+    ["Traitement en lien avec des patients", mrPopulationSelectedText(d)],
+  ]);
+  y = drawFieldBox(doc, y, "Entité(s) responsable(s) du projet / porteur(s) du projet", safe(d.porteur), 11);
+  y = drawFieldBox(doc, y, "Responsable scientifique sur le site du CLB", safe(d.porteur), 11);
+  y = drawFieldBox(doc, y, "Acteur opérationnel (interne, chercheur...) sur le site du CLB", safe(d.email) !== "—" ? `${safe(d.porteur)} — ${safe(d.email)}` : safe(d.porteur), 11);
+  y = drawFieldBox(doc, y, "Nom du projet - titre et acronyme", safe(d.titre), 12);
+  y = drawFieldBox(doc, y, "Numéro EDS / équivalent si applicable", "", 10);
+
+  y = drawSectionHeader(doc, y, "I. Description scientifique du projet");
+  y = drawFieldBox(doc, y, "Objectif du projet (finalité du traitement de données)", safe(d.q6_objective || d.resume), 16);
+  y = drawFieldBox(doc, y, "Description grand public", "", 18);
+  y = drawFieldBox(doc, y, "Description détaillée", safe(d.resume), 26);
+  y = drawFieldBox(doc, y, "Catégorie de population concernée", mrPopulationSelectedText(d), 10);
+  y = drawFieldBox(doc, y, "Description de la population", safe(d.mr_population_desc), 18);
+  y = drawTwoColumnFields(doc, y, [
+    ["Nombre concerné", safe(d.mr_population_counts)],
+    ["Type de tumeur / pathologie", safe(d.mr_pathology)],
+  ]);
+  y = drawFieldBox(doc, y, "Période concernée", safe(d.q6_period || derivePeriod(d)), 10);
+
+  y = drawSectionHeader(doc, y, "II. Description RGPD et sécurité");
+  y = drawFieldBox(doc, y, "Catégorisation du projet (cas 1 à 6 ou autre)", safe(d.mr_case), 12);
+  y = drawFieldBox(doc, y, "Centres / sites / partenaires concernés", [q6SitesSelectedText(d), partnerTypesText(d), safe(d.coord)].filter(v => v !== "—").join(" ; ") || "—", 12);
+  y = drawFieldBox(doc, y, "Circulation des données / outil de recueil / hébergement", mrFlowSelectedText(d, d.mr_flow_other), 16);
+  y = drawFieldBox(doc, y, "Catégories de données traitées", mrDataSelectedText(d, d.mr_data_other), 18);
+  y = drawFieldBox(doc, y, "Fondement juridique", safe(d.mr_legal_basis), 10);
+  y = drawFieldBox(doc, y, "Durée de conservation des données", [safe(d.mr_retention), safe(d.mr_retention_detail)].filter(v => v !== "—").join(" — ") || "—", 12);
+  y = drawFieldBox(doc, y, "Données sensibles traitées", [safe(d.mr_sensitive), safe(d.mr_sensitive_detail)].filter(v => v !== "—").join(" — ") || "—", 14);
+  y = drawFieldBox(doc, y, "Pseudonymisation", safe(d.mr_pseudonymisation), 18);
+  y = drawFieldBox(doc, y, "Mesures de sécurité / commentaires", safe(d.trf_com), 18);
+  y = drawFieldBox(doc, y, "Contrat rédigé / validation juridique", safe(d.mr_contract_status), 12);
+
+  y = drawSectionHeader(doc, y, "III. Information des personnes concernées");
+  y = drawFieldBox(doc, y, "Mode d'information prévu", safe(d.mr_information_mode), 16);
+
+  y = drawSectionHeader(doc, y, "IV. Demande de certificat d'instruction et/ou d'avis éthique");
+  y = drawFieldBox(doc, y, "Besoin de certification RGPD / avis éthique", safe(d.mr_ethics_need), 16);
+
+  y = drawSectionHeader(doc, y, "V. Avis du délégué à la protection des données");
+  y = drawFieldBox(doc, y, "Partie réservée au DPD", "", 28);
+
+  y = drawSectionHeader(doc, y, "VI. Description pour le Comité data");
+  y = drawFieldBox(doc, y, "Axe valorisation de la donnée / partage des données à l'issue du projet", "", 24);
+
+  drawSignatureArea(doc, y, "Signature porteur");
+  doc.save(`MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`);
+}
+
+async function generateCmtPdf(d = getFormData()) {
+  const { jsPDF } = window.jspdf;
+  const doc = new jsPDF({ unit: "mm", format: "a4" });
+  await tryAddLogoToPdf(doc);
+  initFormDoc(doc);
+
+  let y = 14;
+  y = drawDocTitle(doc, y, "Fiche CMT", "Demande d'échantillons");
+  y = drawIntroBox(doc, y, "Mise en forme inspirée de la fiche d'origine avec grands blocs de saisie, zones structurées et espaces de validation.");
+
+  y = drawTwoColumnFields(doc, y, [
+    ["Date de la demande", new Date().toLocaleDateString("fr-FR")],
+    ["Clinicien impliqué", safe(d.cmt_clinician)],
+  ]);
+  y = drawFieldBox(doc, y, "TITRE du projet", safe(d.titre), 12);
+  y = drawFieldBox(doc, y, "Porteur(s)", safe(d.porteur), 10);
+  y = drawFieldBox(doc, y, "Laboratoire / Etablissement", safe(d.unite), 10);
+  y = drawFieldBox(doc, y, "Coordonnées", safe(d.email), 10);
+  y = drawFieldBox(doc, y, "Collaboration(s) / Partenariat(s)", safe(d.cmt_partnerships) !== "—" ? safe(d.cmt_partnerships) : ([partnerTypesText(d), safe(d.coord)].filter(v => v !== "—").join(" ; ") || "—"), 12);
+  y = drawFieldBox(doc, y, "Financement du projet", safe(d.cmt_funding), 10);
+
+  y = drawSectionHeader(doc, y, "Description précise des échantillons demandés");
+  y = drawGridTable(doc, y, [
+    "Type d'échantillon",
+    "Organe / localisation",
+    "Pathologie",
+    "Nombre",
+    "Critères clinico-biologiques",
+    "Critères quantitatifs / qualitatifs",
+    "A apparier",
+  ], [[
+    safe(d.cmt_sample_type),
+    safe(d.cmt_sample_site),
+    safe(d.cmt_sample_pathology),
+    safe(d.cmt_sample_count),
+    safe(d.cmt_criteria_clinical),
+    safe(d.cmt_criteria_quality),
+    d.cmt_matching ? "Oui" : "Non",
+  ]], [24, 24, 22, 14, 40, 40, 18]);
+  y = doc.lastAutoTable.finalY + 3;
+  y = drawFieldBox(doc, y, "Autre précision utile pour la sélection des échantillons", safe(d.cmt_selection_note), 14);
+
+  y = drawSectionHeader(doc, y, "Résumé du projet");
+  y = drawFieldBox(doc, y, "Rationnel, finalité de l'utilisation des échantillons, analyses prévues", safe(d.cmt_summary) !== "—" ? safe(d.cmt_summary) : safe(d.resume), 28);
+
+  y = drawSectionHeader(doc, y, "Traitement des données");
+  y = drawFieldBox(doc, y, "Liste des données associées à collecter", safe(d.cmt_data_list), 18);
+  y = drawFieldBox(doc, y, "Objectif du traitement de données", safe(d.cmt_data_objective), 16);
+
+  y = drawSectionHeader(doc, y, "Ethique");
+  y = drawFieldBox(doc, y, "Impact(s) éthique(s) potentiel(s) pour le patient ou la société", safe(d.cmt_ethics_impact), 22);
+
+  y = drawSectionHeader(doc, y, "Plateformes technologiques ou expertises sollicitées");
+  y = drawFieldBox(doc, y, "Plateformes / expertises", cmtPlatformsSelectedText(d), 14);
+
+  y = drawSectionHeader(doc, y, "Suivi et validation");
+  y = drawFieldBox(doc, y, "Commentaires / réserves / suivi", safe(d.trf_com), 22);
+
+  drawSignatureArea(doc, y, "Pour le Comité Médico-Technique");
+  doc.save(`CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`);
 }
 
 /* ---------------------------
