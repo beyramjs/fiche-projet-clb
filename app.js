@@ -77,7 +77,7 @@ const q6SiteOther = $("#q6_site_other");
 const q6SiteOtherWrap = $("#q6SiteOtherWrap");
 const mrPopulationOther = $("#mr_population_other");
 const mrPopulationOtherWrap = $("#mrPopulationOtherWrap");
-const mrTumorOther = $("#mr_tumor_other");
+const mrTumorType = $("#mr_tumor_type");
 const mrTumorOtherWrap = $("#mrTumorOtherWrap");
 const mrCaseOtherWrap = $("#mrCaseOtherWrap");
 const mrCase1Wrap = $("#mrCase1Wrap");
@@ -105,6 +105,7 @@ const cmtPfOtherWrap = $("#cmtPfOtherWrap");
 const fundingTableBody = $("#fundingTable tbody");
 
 deconflictLegacyMr004Fields();
+normalizeFormPresentation();
 
 $("#btnAddFunding").addEventListener("click", addFundingRow);
 $("#btnSave").addEventListener("click", saveLocal);
@@ -134,7 +135,7 @@ function handleConditionalFields() {
   if (q6Section) q6Section.style.display = showQ6 ? "block" : "none";
   if (q6SiteOtherWrap) q6SiteOtherWrap.style.display = q6SiteOther?.checked ? "block" : "none";
   if (mrPopulationOtherWrap) mrPopulationOtherWrap.style.display = mrPopulationOther?.checked ? "block" : "none";
-  if (mrTumorOtherWrap) mrTumorOtherWrap.style.display = mrTumorOther?.checked ? "block" : "none";
+  if (mrTumorOtherWrap) mrTumorOtherWrap.style.display = mrTumorType?.value === "other" ? "block" : "none";
   const mrCaseValue = form.elements.mr_case?.value || "";
   if (mrCaseOtherWrap) mrCaseOtherWrap.style.display = mrCaseValue === "other" ? "block" : "none";
   if (mrCase1Wrap) mrCase1Wrap.style.display = mrCaseValue === "1" ? "block" : "none";
@@ -168,12 +169,6 @@ function handleConditionalFields() {
       "q6_site_clb", "q6_site_ihope", "q6_site_other",
       "mr_population_patients", "mr_population_aidants", "mr_population_pros", "mr_population_other",
       "mr_case_doc_risk", "mr_case_doc_notice", "mr_case_doc_ecrf",
-      "mr_tumor_all", "mr_tumor_brain", "mr_tumor_colorectal", "mr_tumor_stomach", "mr_tumor_liver",
-      "mr_tumor_small_intestine", "mr_tumor_eye", "mr_tumor_orl", "mr_tumor_bone", "mr_tumor_ovary",
-      "mr_tumor_pancreas", "mr_tumor_skin", "mr_tumor_pleura", "mr_tumor_lung", "mr_tumor_prostate",
-      "mr_tumor_kidney", "mr_tumor_hematology", "mr_tumor_breast", "mr_tumor_testicle", "mr_tumor_thyroid",
-      "mr_tumor_uterus", "mr_tumor_bladder", "mr_tumor_soft_tissue", "mr_tumor_other_solid",
-      "mr_tumor_unknown_primary", "mr_tumor_other",
       "mr_flow_ecrf", "mr_flow_owncloud", "mr_flow_mss",
       "mr_data_pathology", "mr_data_treatments", "mr_data_genetics_somatic", "mr_data_genetics_germline", "mr_data_imaging", "mr_data_slides", "mr_data_samples", "mr_data_pgeb_contacted", "mr_data_health_other", "mr_data_social", "mr_data_nonhealth_other",
       "mr_info_patient_level5", "mr_info_patient_notice", "mr_info_patient_other",
@@ -187,7 +182,7 @@ function handleConditionalFields() {
     [
       "trf_zone", "trf_dest", "trf_desc", "trf_com",
       "q6_resp_scientifique", "q6_contact", "q6_site_other_txt", "q6_period", "q6_contract", "q6_objective",
-      "mr_population_other_txt", "mr_population_desc", "mr_population_counts", "mr_tumor_other_txt", "mr_case", "mr_case_other_detail",
+      "mr_population_other_txt", "mr_population_desc", "mr_population_counts", "mr_tumor_type", "mr_tumor_other_txt", "mr_case", "mr_case_other_detail",
       "mr_case1_internal_teams", "mr_case1_subcontractors", "mr_case1_stats_team",
       "mr_case2_centers", "mr_case2_internal_teams", "mr_case2_subcontractors", "mr_case2_stats_team",
       "mr_case36_internal_teams", "mr_case_host_country", "mr_case_collection_responsible", "mr_case_collection_tool", "mr_flow_other",
@@ -195,8 +190,8 @@ function handleConditionalFields() {
       "mr_sensitive_types", "mr_sensitive_justification", "mr_questionnaire_tool", "mr_pseudonymisation", "mr_identity_removal", "mr_contract_drafted", "mr_contract_validated_by",
       "mr_info_patient_other_txt", "mr_info_nonpatient_other_txt", "mr_ethics_topic",
       "cmt_clinician", "cmt_partnerships", "cmt_funding", "cmt_selection_note", "cmt_sample_type", "cmt_sample_site",
-      "cmt_sample_pathology", "cmt_sample_count", "cmt_criteria_clinical", "cmt_criteria_quality", "cmt_summary",
-      "cmt_data_list", "cmt_data_objective", "cmt_ethics_impact", "cmt_pf_other_txt"
+      "cmt_sample_pathology", "cmt_sample_count", "cmt_criteria_clinical", "cmt_criteria_quality", "cmt_criteria_quantitative", "cmt_criteria_quality_detail", "cmt_matching_detail", "cmt_summary",
+      "cmt_data_list", "cmt_data_objective", "cmt_ethics_impact", "cmt_pf_other_txt", "cmt_platform_details"
     ].forEach((name) => {
       if (form.elements[name]) form.elements[name].value = "";
     });
@@ -240,6 +235,29 @@ function deconflictLegacyMr004Fields() {
       }
     });
   });
+}
+
+function normalizeFormPresentation() {
+  const straySpan = Array.from(document.querySelectorAll("span")).find((el) => {
+    const text = (el.textContent || "").toLowerCase();
+    return text.includes("plateformes ou expertises") && !el.closest("#cmtBlock");
+  });
+  if (straySpan) straySpan.remove();
+
+  const cmtNote = document.querySelector("#cmtBlock .small");
+  if (cmtNote) {
+    cmtNote.textContent = "Une participation forfaitaire aux frais du CRB est demandée. Cette section suit la logique de la fiche CMT d'origine.";
+  }
+
+  const cmtCriteriaLabel = document.querySelector('textarea[name="cmt_criteria_quality"]')?.closest("label")?.querySelector("span");
+  if (cmtCriteriaLabel) {
+    cmtCriteriaLabel.textContent = "Critères de sélection complémentaires";
+  }
+
+  const cmtMatchingLabel = document.querySelector('input[name="cmt_matching"]')?.closest("label")?.querySelector("span");
+  if (cmtMatchingLabel) {
+    cmtMatchingLabel.textContent = "Échantillons à apparier";
+  }
 }
 
 function applyQ6Prefill() {
@@ -411,12 +429,6 @@ function getFormData() {
     "trf_ech","trf_data","trf_multi",
     "q6_site_clb","q6_site_ihope","q6_site_other",
     "mr_population_patients","mr_population_aidants","mr_population_pros","mr_population_other",
-    "mr_tumor_all","mr_tumor_brain","mr_tumor_colorectal","mr_tumor_stomach","mr_tumor_liver",
-    "mr_tumor_small_intestine","mr_tumor_eye","mr_tumor_orl","mr_tumor_bone","mr_tumor_ovary",
-    "mr_tumor_pancreas","mr_tumor_skin","mr_tumor_pleura","mr_tumor_lung","mr_tumor_prostate",
-    "mr_tumor_kidney","mr_tumor_hematology","mr_tumor_breast","mr_tumor_testicle","mr_tumor_thyroid",
-    "mr_tumor_uterus","mr_tumor_bladder","mr_tumor_soft_tissue","mr_tumor_other_solid",
-    "mr_tumor_unknown_primary","mr_tumor_other",
     "mr_flow_ecrf","mr_flow_owncloud","mr_flow_mss",
     "mr_data_pathology","mr_data_treatments","mr_data_genetics_somatic","mr_data_genetics_germline","mr_data_imaging","mr_data_slides","mr_data_samples","mr_data_pgeb_contacted","mr_data_health_other","mr_data_social","mr_data_nonhealth_other",
     "mr_info_patient_level5","mr_info_patient_notice","mr_info_patient_other",
@@ -441,6 +453,13 @@ function getFormData() {
   obj.mr_contract_status = mrContractText(obj);
   obj.mr_ethics_need = mrEthicsNeedText(obj);
   obj.mr_data_other = obj.mr_data_schema || "";
+  obj.cmt_criteria_quality = [obj.cmt_criteria_quantitative, obj.cmt_criteria_quality_detail || obj.cmt_criteria_quality].filter(Boolean).join(" | ");
+  if (obj.cmt_matching_detail) {
+    obj.cmt_selection_note = [obj.cmt_selection_note, `Appariement: ${obj.cmt_matching_detail}`].filter(Boolean).join(" | ");
+  }
+  if (obj.cmt_platform_details) {
+    obj.cmt_pf_other_txt = [obj.cmt_pf_other_txt, obj.cmt_platform_details].filter(Boolean).join(" | ");
+  }
 
   return obj;
 }
@@ -1451,36 +1470,8 @@ function mrPopulationSelectedText(d) {
 }
 
 function mrTumorSelectedText(d) {
-  const map = [
-    ["mr_tumor_all", "Tout cancer"],
-    ["mr_tumor_brain", "Tumeur du cerveau"],
-    ["mr_tumor_colorectal", "Tumeur colorectale"],
-    ["mr_tumor_stomach", "Tumeur de l'estomac"],
-    ["mr_tumor_liver", "Tumeur du foie"],
-    ["mr_tumor_small_intestine", "Tumeur de l'intestin grêle"],
-    ["mr_tumor_eye", "Tumeur de l'œil"],
-    ["mr_tumor_orl", "Tumeur ORL / VADS"],
-    ["mr_tumor_bone", "Tumeur de l'os / cartilage"],
-    ["mr_tumor_ovary", "Tumeur de l'ovaire"],
-    ["mr_tumor_pancreas", "Tumeur du pancréas"],
-    ["mr_tumor_skin", "Tumeur de la peau"],
-    ["mr_tumor_pleura", "Tumeur de la plèvre"],
-    ["mr_tumor_lung", "Tumeur du poumon"],
-    ["mr_tumor_prostate", "Tumeur de la prostate"],
-    ["mr_tumor_kidney", "Tumeur du rein"],
-    ["mr_tumor_hematology", "Tumeur hématologique"],
-    ["mr_tumor_breast", "Tumeur du sein"],
-    ["mr_tumor_testicle", "Tumeur du testicule"],
-    ["mr_tumor_thyroid", "Tumeur thyroïde / endocrine"],
-    ["mr_tumor_uterus", "Tumeur col / endomètre"],
-    ["mr_tumor_bladder", "Tumeur de la vessie"],
-    ["mr_tumor_soft_tissue", "Tumeur des tissus mous"],
-    ["mr_tumor_other_solid", "Autres tumeurs solides"],
-    ["mr_tumor_unknown_primary", "Site primitif inconnu"],
-    ["mr_tumor_other", d.mr_tumor_other_txt || "Autre tumeur"],
-  ];
-  const out = map.filter(([k]) => d[k]).map(([, label]) => label);
-  return out.join(", ") || "—";
+  if (d.mr_tumor_type === "other") return d.mr_tumor_other_txt || "Autre tumeur";
+  return d.mr_tumor_type || "—";
 }
 
 function mrCaseLabelText(d) {
@@ -1879,7 +1870,7 @@ async function buildCmtPdfDoc(d = getFormData()) {
     safe(d.cmt_sample_count),
     safe(d.cmt_criteria_clinical),
     safe(d.cmt_criteria_quality),
-    d.cmt_matching ? "Oui" : "Non",
+    d.cmt_matching ? (safe(d.cmt_matching_detail) !== "â€”" ? `Oui — ${safe(d.cmt_matching_detail)}` : "Oui") : "Non",
   ]], [24, 24, 22, 14, 40, 40, 18]);
   y = doc.lastAutoTable.finalY + 3;
   y = drawFieldBox(doc, y, "Autre précision utile pour la sélection des échantillons", safe(d.cmt_selection_note), 14);
@@ -1895,7 +1886,7 @@ async function buildCmtPdfDoc(d = getFormData()) {
   y = drawFieldBox(doc, y, "Impact(s) éthique(s) potentiel(s) pour le patient ou la société", safe(d.cmt_ethics_impact), 22);
 
   y = drawSectionHeader(doc, y, "Plateformes technologiques ou expertises sollicitées");
-  y = drawFieldBox(doc, y, "Plateformes / expertises", cmtPlatformsSelectedText(d), 14);
+  y = drawFieldBox(doc, y, "Plateformes / expertises", [cmtPlatformsSelectedText(d), safe(d.cmt_platform_details)].filter(v => v !== "â€”").join(" | ") || "â€”", 16);
 
   y = drawSectionHeader(doc, y, "Suivi et validation");
   y = drawFieldBox(doc, y, "Commentaires / réserves / suivi", safe(d.trf_com), 22);

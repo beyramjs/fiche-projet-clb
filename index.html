@@ -483,7 +483,40 @@
               <input type="text" name="mr_population_counts" placeholder="Ex : 250 au total, 140 CLB" />
             </label>
 
-            <fieldset class="fieldset">
+            <label>
+              <span>Type de tumeur / pathologie</span>
+              <select name="mr_tumor_type" id="mr_tumor_type">
+                <option value="">—</option>
+                <option value="Tout cancer">Tout cancer</option>
+                <option value="Tumeur du cerveau">Tumeur du cerveau</option>
+                <option value="Tumeur colorectale">Tumeur colorectale</option>
+                <option value="Tumeur de l'estomac">Tumeur de l'estomac</option>
+                <option value="Tumeur du foie">Tumeur du foie</option>
+                <option value="Tumeur de l'intestin grêle">Tumeur de l'intestin grêle</option>
+                <option value="Tumeur de l'œil">Tumeur de l'œil</option>
+                <option value="Tumeur ORL / VADS">Tumeur ORL / VADS</option>
+                <option value="Tumeur de l'os / cartilage">Tumeur de l'os / cartilage</option>
+                <option value="Tumeur de l'ovaire">Tumeur de l'ovaire</option>
+                <option value="Tumeur du pancréas">Tumeur du pancréas</option>
+                <option value="Tumeur de la peau">Tumeur de la peau</option>
+                <option value="Tumeur de la plèvre">Tumeur de la plèvre</option>
+                <option value="Tumeur du poumon">Tumeur du poumon</option>
+                <option value="Tumeur de la prostate">Tumeur de la prostate</option>
+                <option value="Tumeur du rein">Tumeur du rein</option>
+                <option value="Tumeur hématologique">Tumeur hématologique</option>
+                <option value="Tumeur du sein">Tumeur du sein</option>
+                <option value="Tumeur du testicule">Tumeur du testicule</option>
+                <option value="Tumeur thyroïde / endocrine">Tumeur thyroïde / endocrine</option>
+                <option value="Tumeur col / endomètre">Tumeur col / endomètre</option>
+                <option value="Tumeur de la vessie">Tumeur de la vessie</option>
+                <option value="Tumeur des tissus mous">Tumeur des tissus mous</option>
+                <option value="Autres tumeurs solides">Autres tumeurs solides</option>
+                <option value="Site primitif inconnu">Site primitif inconnu</option>
+                <option value="other">Autre tumeur</option>
+              </select>
+            </label>
+
+            <fieldset class="fieldset" id="mrTumorLegacyFieldset" style="display:none;">
               <legend>Type de tumeur / pathologie</legend>
               <div class="grid3">
                 <label class="checkline"><input type="checkbox" name="mr_tumor_all" /> <span>Tout cancer</span></label>
@@ -840,6 +873,8 @@
               <textarea name="mr_ethics_topic" rows="2"></textarea>
             </label>
           </div>
+            <span>Précisions / contact pour les plateformes ou expertises sollicitées</span>
+            
         </section>
 
         <section class="subcard" id="cmtBlock" style="display:none;">
@@ -847,6 +882,7 @@
           <div class="infoBox warn">
             La fiche CMT doit être complétée. Les éléments projet, porteur, établissement, collaborations, financement, résumé et objectif du traitement sont réutilisés automatiquement pour éviter les doubles saisies.
           </div>
+          <p class="small">Une participation forfaitaire aux frais du CRB est demandÃ©e. Cette section suit la logique de la fiche CMT d'origine.</p>
 
           <div class="grid2">
             <label>
@@ -911,7 +947,24 @@
 
           <label>
             <span>Résumé CMT : rationnel, finalité, analyses prévues</span>
-            <textarea name="cmt_summary" rows="4"></textarea>
+              <textarea name="cmt_summary" rows="4"></textarea>
+          </label>
+
+          <div class="grid2">
+            <label>
+              <span>Critères quantitatifs (nb de cellules, concentration…)</span>
+              <textarea name="cmt_criteria_quantitative" rows="2"></textarea>
+            </label>
+
+            <label>
+              <span>Critères qualitatifs (viabilité, anticoagulant, RIN…)</span>
+              <textarea name="cmt_criteria_quality_detail" rows="2"></textarea>
+            </label>
+          </div>
+
+          <label>
+            <span>Appariement / liste des échantillons déjà identifiés</span>
+            <textarea name="cmt_matching_detail" rows="2" placeholder="Transmettre la liste si les échantillons ont déjà été identifiés"></textarea>
           </label>
 
           <label>
@@ -945,6 +998,10 @@
           <label id="cmtPfOtherWrap" style="display:none;">
             <span>Préciser l’autre expertise / plateforme</span>
             <input type="text" name="cmt_pf_other_txt" />
+          </label>
+          <label>
+            <span>Précisions / contact pour les plateformes ou expertises sollicitées</span>
+            <textarea name="cmt_platform_details" rows="3"></textarea>
           </label>
         </section>
       </section>
