@@ -4,6 +4,7 @@ from tempfile import NamedTemporaryFile
 import cgi
 import json
 import os
+import mimetypes
 import traceback
 import zipfile
 import xml.etree.ElementTree as ET
@@ -13,6 +14,8 @@ import win32com.client
 
 HOST = "127.0.0.1"
 PORT = 8765
+DATA_DIR = Path(__file__).with_name("data")
+REGISTRY_PATH = DATA_DIR / "projects_registry.json"
 
 
 def send_via_outlook(to_address: str, subject: str, body: str, attachments: list[Path]) -> None:
@@ -24,6 +27,40 @@ def send_via_outlook(to_address: str, subject: str, body: str, attachments: list
     for attachment in attachments:
       mail.Attachments.Add(str(attachment))
     mail.Send()
+
+
+def _ensure_data_dir() -> None:
+    DATA_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def _load_registry() -> list[dict]:
+    _ensure_data_dir()
+    if not REGISTRY_PATH.exists():
+        return []
+    try:
+        raw = REGISTRY_PATH.read_text(encoding="utf-8")
+        parsed = json.loads(raw) if raw.strip() else []
+        return parsed if isinstance(parsed, list) else []
+    except Exception:
+        return []
+
+
+def _save_registry(items: list[dict]) -> None:
+    _ensure_data_dir()
+    REGISTRY_PATH.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+
+def _upsert_registry_row(row: dict) -> None:
+    code = str(row.get("code") or "").strip()
+    if not code:
+        return
+    items = _load_registry()
+    idx = next((i for i, r in enumerate(items) if str(r.get("code") or "") == code), -1)
+    if idx >= 0:
+        items[idx] = row
+    else:
+        items.insert(0, row)
+    _save_registry(items)
 
 
 W_NS = {
@@ -207,12 +244,124 @@ class OutlookBridgeHandler(BaseHTTPRequestHandler):
         self.send_response(204)
         self.end_headers()
 
+    def do_GET(self) -> None:
+        if self.path in ("/health", "/health/"):
+            return self._send_json(200, {"ok": True})
+
+        if self.path.startswith("/registry/"):
+            return self._handle_registry_get()
+
+        # Serve the static site in "local mode" so the browser is on http://127.0.0.1:8765
+        return self._serve_static()
+
     def do_POST(self) -> None:
         if self.path == "/send-mail":
             return self._handle_send_mail()
         if self.path == "/send-docx":
             return self._handle_send_docx()
+        if self.path == "/registry/upsert":
+            return self._handle_registry_upsert()
         self._send_json(404, {"error": "Route inconnue"})
+
+    def _handle_registry_get(self) -> None:
+        try:
+            if self.path.startswith("/registry/list"):
+                items = _load_registry()
+                # return lightweight rows
+                lite = []
+                for r in items:
+                    lite.append({
+                        "code": r.get("code", ""),
+                        "titre": r.get("titre", ""),
+                        "porteur": r.get("porteur", ""),
+                        "updated_at": r.get("updated_at", ""),
+                        "mr004": bool(r.get("mr004")),
+                        "cmt": bool(r.get("cmt")),
+                    })
+                return self._send_json(200, lite)
+
+            if self.path.startswith("/registry/get"):
+                # /registry/get?code=...
+                from urllib.parse import urlparse, parse_qs
+                q = parse_qs(urlparse(self.path).query)
+                code = (q.get("code") or [""])[0].strip()
+                if not code:
+                    return self._send_json(400, {"error": "code manquant"})
+                items = _load_registry()
+                row = next((r for r in items if str(r.get("code") or "") == code), None)
+                if not row:
+                    return self._send_json(404, {"error": "introuvable"})
+                return self._send_json(200, row)
+
+            if self.path.startswith("/registry/export.csv"):
+                return self._send_registry_csv()
+
+            return self._send_json(404, {"error": "Route registre inconnue"})
+        except Exception as exc:
+            return self._send_json(500, {"error": str(exc), "trace": traceback.format_exc()})
+
+    def _handle_registry_upsert(self) -> None:
+        try:
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0") or "0"))
+            payload = json.loads(raw.decode("utf-8"))
+            if not isinstance(payload, dict):
+                return self._send_json(400, {"error": "payload invalide"})
+            _upsert_registry_row(payload)
+            return self._send_json(200, {"ok": True})
+        except Exception as exc:
+            return self._send_json(500, {"error": str(exc), "trace": traceback.format_exc()})
+
+    def _send_registry_csv(self) -> None:
+        items = _load_registry()
+        headers = ["code","created_at","updated_at","source","titre","porteur","email","unite","mr004","cmt","zone"]
+        lines = [",".join(headers)]
+        for r in items:
+            row = []
+            for h in headers:
+                v = r.get(h, "")
+                s = "" if v is None else str(v)
+                row.append('"' + s.replace('"', '""') + '"')
+            lines.append(",".join(row))
+        data = ("\n".join(lines)).encode("utf-8")
+        self.send_response(200)
+        self.send_header("Content-Type", "text/csv; charset=utf-8")
+        self.send_header("Content-Disposition", 'attachment; filename="registre_projets.csv"')
+        self.send_header("Content-Length", str(len(data)))
+        self.end_headers()
+        self.wfile.write(data)
+
+    def _serve_static(self) -> None:
+        try:
+            root = Path(__file__).resolve().parent
+            path = self.path.split("?", 1)[0]
+            if path in ("/", ""):
+                path = "/index.html"
+
+            safe = path.lstrip("/").replace("/", os.sep)
+            file_path = (root / safe).resolve()
+
+            # prevent directory traversal
+            if root not in file_path.parents and file_path != root:
+                self.send_response(403)
+                self.end_headers()
+                return
+
+            if not file_path.exists() or not file_path.is_file():
+                self.send_response(404)
+                self.end_headers()
+                return
+
+            ctype, _ = mimetypes.guess_type(str(file_path))
+            ctype = ctype or "application/octet-stream"
+            data = file_path.read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", ctype)
+            self.send_header("Content-Length", str(len(data)))
+            self.end_headers()
+            self.wfile.write(data)
+        except Exception:
+            self.send_response(500)
+            self.end_headers()
 
     def _handle_send_docx(self) -> None:
         temp_files: list[Path] = []

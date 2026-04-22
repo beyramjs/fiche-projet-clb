@@ -49,6 +49,8 @@ const lastSavedEl = $("#lastSaved");
 const projectCodeBadge = $("#projectCodeBadge");
 const registrySelect = $("#registrySelect");
 const btnLoadFromRegistry = $("#btnLoadFromRegistry");
+const btnImportJson = $("#btnImportJson");
+const localModeHint = $("#localModeHint");
 
 // Some strings were introduced via copy/paste from Word/PDF and can end up mojibake-encoded.
 // We normalize at render/export time so the UI/PDF stays clean even if a few literals slip in.
@@ -167,6 +169,7 @@ $("#btnExportRegistry").addEventListener("click", exportRegistryCsv);
 btnLoadFromRegistry?.addEventListener("click", loadFromRegistrySelection);
 $("#btnExportJson").addEventListener("click", exportCurrentProjectJson);
 $("#fileImportJson")?.addEventListener("change", importProjectJsonFromFile);
+btnImportJson?.addEventListener("click", () => $("#fileImportJson")?.click());
 
 form.addEventListener("input", () => {
   handleConditionalFields();
@@ -181,6 +184,35 @@ form.addEventListener("change", () => {
 ensureProjectCode();
 renderProjectCodeBadge();
 refreshRegistryPicker();
+initLocalModeHintsAndBridge();
+
+let bridgeMode = { available: false, baseUrl: "" };
+
+async function initLocalModeHintsAndBridge() {
+  // If page is served via https (GitHub Pages), browsers block fetch to http://127.0.0.1 (mixed content).
+  // So Word sending + disk registry require opening the app in local mode (served over http by the python bridge).
+  const isHttps = location.protocol === "https:";
+  const localUrl = "http://127.0.0.1:8765/";
+
+  if (localModeHint) {
+    localModeHint.textContent =
+      isHttps
+        ? `Mode local requis pour Outlook/registre disque : lancez "python .\\outlook_mail_bridge.py" puis ouvrez ${localUrl}`
+        : "Mode local actif si le service Python tourne sur ce PC.";
+  }
+
+  // Detect bridge availability (works when the page is served from the same origin http://127.0.0.1:8765)
+  try {
+    const res = await fetch("/health", { method: "GET" });
+    if (res.ok) {
+      bridgeMode = { available: true, baseUrl: location.origin };
+      // Prefer server-side registry when available
+      await refreshRegistryPickerFromBridge();
+    }
+  } catch {
+    bridgeMode = { available: false, baseUrl: "" };
+  }
+}
 
 function handleConditionalFields() {
   if (autresWrap) autresWrap.style.display = zAutres?.checked ? "block" : "none";
@@ -575,23 +607,32 @@ function upsertRegistryRow(d, source = "manual") {
   localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
   renderProjectCodeBadge();
   refreshRegistryPicker();
+
+  // Also persist to disk registry if the local bridge is available
+  persistRegistryRowToBridge(row).catch(() => {});
 }
 
 function exportRegistryCsv() {
+  // If local bridge is available, export the disk-based registry (shared across browser sessions on this PC).
+  if (bridgeMode.available) {
+    window.open("/registry/export.csv", "_blank");
+    return;
+  }
+
   const registry = getRegistry();
-  const headers = ["code","created_at","updated_at","source","titre","porteur","email","unite","mr004","cmt","zone"];
+  const headers = ["code", "created_at", "updated_at", "source", "titre", "porteur", "email", "unite", "mr004", "cmt", "zone"];
   const lines = [headers.join(",")];
   registry.forEach((r) => {
     const vals = headers.map((h) => {
       const v = r[h];
-      const s = (v === undefined || v === null) ? "" : String(v);
+      const s = v === undefined || v === null ? "" : String(v);
       // CSV escaping
       return `"${s.replaceAll('"', '""')}"`;
     });
     lines.push(vals.join(","));
   });
   const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
-  downloadBlob(blob, `registre_projets_${new Date().toISOString().slice(0,10)}.csv`);
+  downloadBlob(blob, `registre_projets_${new Date().toISOString().slice(0, 10)}.csv`);
 }
 
 function refreshRegistryPicker() {
@@ -612,6 +653,15 @@ function refreshRegistryPicker() {
 function loadFromRegistrySelection() {
   const code = String(registrySelect?.value || "").trim();
   if (!code) return;
+
+  // Prefer disk registry if bridge available
+  if (bridgeMode.available) {
+    loadSnapshotFromBridge(code).catch((err) => {
+      alert(`Chargement impossible depuis le registre disque: ${err.message}`);
+    });
+    return;
+  }
+
   const registry = getRegistry();
   const row = registry.find((r) => r.code === code);
   if (!row || !row.snapshot) {
@@ -625,6 +675,43 @@ function loadFromRegistrySelection() {
   saveLocal();
   upsertRegistryRow(getFormData(), "load_registry");
   showAlert(`Projet ${code} chargé depuis le registre.`, "ok");
+}
+
+async function persistRegistryRowToBridge(row) {
+  if (!bridgeMode.available) return;
+  await fetch("/registry/upsert", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(row),
+  });
+}
+
+async function refreshRegistryPickerFromBridge() {
+  if (!registrySelect) return;
+  const res = await fetch("/registry/list");
+  if (!res.ok) return;
+  const items = await res.json().catch(() => []);
+  if (!Array.isArray(items)) return;
+  registrySelect.innerHTML = `<option value="">Charger depuis le registre…</option>`;
+  items.forEach((r) => {
+    const opt = document.createElement("option");
+    opt.value = r.code || "";
+    opt.textContent = [r.code, r.titre].filter(Boolean).join(" — ") || r.code || "(sans code)";
+    registrySelect.appendChild(opt);
+  });
+}
+
+async function loadSnapshotFromBridge(code) {
+  const res = await fetch(`/registry/get?code=${encodeURIComponent(code)}`);
+  const payload = await res.json().catch(() => null);
+  if (!res.ok || !payload || !payload.snapshot) throw new Error(payload?.error || `HTTP ${res.status}`);
+  localStorage.setItem("ficheProjet_current_code", code);
+  applyDataToForm(payload.snapshot);
+  handleConditionalFields();
+  recomputeAll();
+  saveLocal();
+  upsertRegistryRow(getFormData(), "load_registry");
+  showAlert(`Projet ${code} chargé depuis le registre disque.`, "ok");
 }
 
 function exportCurrentProjectJson() {
@@ -1309,6 +1396,18 @@ async function sendDocumentEmailAutomaticallyLegacy(docType) {
   const d = requireCoreProjectData();
   if (!d) return;
 
+  if (location.protocol === "https:") {
+    alert(
+      "Envoi Word automatique indisponible depuis GitHub Pages (HTTPS).\n\n" +
+      "Le navigateur bloque l'accès au service local Outlook (HTTP) : c'est normal.\n\n" +
+      "Solution :\n" +
+      "1) Lancez : python .\\outlook_mail_bridge.py\n" +
+      "2) Ouvrez : http://127.0.0.1:8765/\n" +
+      "3) Refaite l'envoi depuis ce mode local."
+    );
+    return;
+  }
+
   if (docType === "mr004" && !d.trf_data) {
     alert("Cochez d'abord 'Transfert de données' dans la Q6 pour envoyer la fiche MR004.");
     return;
@@ -1347,6 +1446,8 @@ async function sendDocumentEmailAutomaticallyLegacy(docType) {
       "Envoi automatique impossible.\n\n" +
       "Vérifiez que le service local Outlook est démarré avec :\n" +
       "python .\\outlook_mail_bridge.py\n\n" +
+      "Puis ouvrez l'application en mode local :\n" +
+      "http://127.0.0.1:8765/\n\n" +
       `Détail : ${error.message}`
     );
   }
