@@ -483,27 +483,142 @@
               <input type="text" name="mr_population_counts" placeholder="Ex : 250 au total, 140 CLB" />
             </label>
 
-            <label>
-              <span>Type de tumeur / pathologie</span>
-              <input type="text" name="mr_pathology" />
-            </label>
+            <fieldset class="fieldset">
+              <legend>Type de tumeur / pathologie</legend>
+              <div class="grid3">
+                <label class="checkline"><input type="checkbox" name="mr_tumor_all" /> <span>Tout cancer</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_brain" /> <span>Tumeur du cerveau</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_colorectal" /> <span>Tumeur colorectale</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_stomach" /> <span>Tumeur de l'estomac</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_liver" /> <span>Tumeur du foie</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_small_intestine" /> <span>Tumeur de l'intestin grêle</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_eye" /> <span>Tumeur de l'œil</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_orl" /> <span>Tumeur ORL / VADS</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_bone" /> <span>Tumeur de l'os / cartilage</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_ovary" /> <span>Tumeur de l'ovaire</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_pancreas" /> <span>Tumeur du pancréas</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_skin" /> <span>Tumeur de la peau</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_pleura" /> <span>Tumeur de la plèvre</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_lung" /> <span>Tumeur du poumon</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_prostate" /> <span>Tumeur de la prostate</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_kidney" /> <span>Tumeur du rein</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_hematology" /> <span>Tumeur hématologique</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_breast" /> <span>Tumeur du sein</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_testicle" /> <span>Tumeur du testicule</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_thyroid" /> <span>Tumeur thyroïde / endocrine</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_uterus" /> <span>Tumeur col / endomètre</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_bladder" /> <span>Tumeur de la vessie</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_soft_tissue" /> <span>Tumeur des tissus mous</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_other_solid" /> <span>Autres tumeurs solides</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_unknown_primary" /> <span>Site primitif inconnu</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_tumor_other" id="mr_tumor_other" /> <span>Autre tumeur</span></label>
+              </div>
+            </fieldset>
 
-            <label>
-              <span>Cas MR004 / catégorisation (1 à 6 ou autre)</span>
-              <input type="text" name="mr_case" placeholder="Ex : cas 2 multicentrique CLB" />
-            </label>
+            <fieldset class="fieldset">
+              <legend>Catégorisation du projet, acteurs et sécurité</legend>
+              <div class="stack">
+                <label class="checkline"><input type="radio" name="mr_case" value="1" /> <span>Cas 1 : pilotage CLB / IHOPe, monocentrique, hébergement CLB ou autre précisé</span></label>
+                <label class="checkline"><input type="radio" name="mr_case" value="2" /> <span>Cas 2 : pilotage CLB / IHOPe, multicentrique, hébergement CLB ou autre précisé</span></label>
+                <label class="checkline"><input type="radio" name="mr_case" value="3" /> <span>Cas 3 : pilotage académique, site CLB et autres sites, hébergement UE</span></label>
+                <label class="checkline"><input type="radio" name="mr_case" value="4" /> <span>Cas 4 : pilotage industriel, site CLB et autres sites, hébergement UE</span></label>
+                <label class="checkline"><input type="radio" name="mr_case" value="5" /> <span>Cas 5 : pilotage académique ou industriel, hébergement hors UE avec décision d'adéquation</span></label>
+                <label class="checkline"><input type="radio" name="mr_case" value="6" /> <span>Cas 6 : pilotage académique ou industriel, hébergement hors UE sans décision d'adéquation</span></label>
+                <label class="checkline"><input type="radio" name="mr_case" value="other" /> <span>Autre cas à détailler</span></label>
+              </div>
+            </fieldset>
           </div>
 
-          <div class="grid3">
-            <label class="checkline"><input type="checkbox" name="mr_flow_ecrf" /> <span>Données saisies dans l’e-CRF du responsable</span></label>
-            <label class="checkline"><input type="checkbox" name="mr_flow_owncloud" /> <span>Plateforme d’échanges sécurisés CLB</span></label>
-            <label class="checkline"><input type="checkbox" name="mr_flow_mss" /> <span>MSS / monSISRA</span></label>
-          </div>
-
-          <label>
-            <span>Autre mode de circulation / outil de recueil / hébergeur</span>
-            <textarea name="mr_flow_other" rows="2"></textarea>
+          <label id="mrTumorOtherWrap" style="display:none;">
+            <span>Préciser l'autre tumeur / pathologie</span>
+            <input type="text" name="mr_tumor_other_txt" />
           </label>
+
+          <label id="mrCaseOtherWrap" style="display:none;">
+            <span>Détailler le cas si le projet ne correspond à aucun des 6 cas</span>
+            <textarea name="mr_case_other_detail" rows="3"></textarea>
+          </label>
+
+          <div id="mrCase1Wrap" class="subcard" style="display:none;">
+            <h4>Questions spécifiques Cas 1</h4>
+            <label>
+              <span>Équipes internes mobilisées sur le projet</span>
+              <textarea name="mr_case1_internal_teams" rows="2"></textarea>
+            </label>
+            <label>
+              <span>Sous-traitants (nom, fonction dans le projet)</span>
+              <textarea name="mr_case1_subcontractors" rows="2"></textarea>
+            </label>
+            <label>
+              <span>Équipe assurant les statistiques</span>
+              <input type="text" name="mr_case1_stats_team" />
+            </label>
+          </div>
+
+          <div id="mrCase2Wrap" class="subcard" style="display:none;">
+            <h4>Questions spécifiques Cas 2</h4>
+            <label>
+              <span>Centres participants</span>
+              <textarea name="mr_case2_centers" rows="2"></textarea>
+            </label>
+            <label>
+              <span>Équipes internes mobilisées sur le projet</span>
+              <textarea name="mr_case2_internal_teams" rows="2"></textarea>
+            </label>
+            <label>
+              <span>Sous-traitants (nom, fonction dans le projet)</span>
+              <textarea name="mr_case2_subcontractors" rows="2"></textarea>
+            </label>
+            <label>
+              <span>Équipe assurant les statistiques</span>
+              <input type="text" name="mr_case2_stats_team" />
+            </label>
+          </div>
+
+          <div id="mrCase2to6Wrap" class="subcard" style="display:none;">
+            <h4>Questions communes Cas 2 à 6</h4>
+            <div class="grid3">
+              <label class="checkline"><input type="checkbox" name="mr_flow_ecrf" /> <span>Données saisies dans l’e-CRF du responsable</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_flow_owncloud" /> <span>Plateforme d’échanges sécurisés CLB</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_flow_mss" /> <span>MSS / monSISRA</span></label>
+            </div>
+
+            <label>
+              <span>Autre mode de circulation / outil de recueil / hébergeur</span>
+              <textarea name="mr_flow_other" rows="2"></textarea>
+            </label>
+          </div>
+
+          <div id="mrCase3to6Wrap" class="subcard" style="display:none;">
+            <h4>Questions communes Cas 3 à 6</h4>
+            <label>
+              <span>Équipes internes mobilisées sur le projet</span>
+              <textarea name="mr_case36_internal_teams" rows="2"></textarea>
+            </label>
+
+            <div class="grid3">
+              <label class="checkline"><input type="checkbox" name="mr_case_doc_risk" /> <span>Analyse des risques / AIPD / autorisation CNIL jointe</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_case_doc_notice" /> <span>Note d'information jointe</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_case_doc_ecrf" /> <span>E-CRF détaillé joint</span></label>
+            </div>
+
+            <label>
+              <span>Pays d'hébergement des données</span>
+              <input type="text" name="mr_case_host_country" />
+            </label>
+          </div>
+
+          <div class="subcard">
+            <h4>Questions à préciser dans tous les cas</h4>
+            <label>
+              <span>Qui assure le recueil des données du CLB / IHOPe ?</span>
+              <textarea name="mr_case_collection_responsible" rows="2"></textarea>
+            </label>
+            <label>
+              <span>Outil de stockage / recueil pendant le projet et éléments complémentaires de sécurité</span>
+              <textarea name="mr_case_collection_tool" rows="3"></textarea>
+            </label>
+          </div>
 
           <div class="grid3">
             <label class="checkline"><input type="checkbox" name="mr_data_pathology" /> <span>Données de pathologie</span></label>
@@ -581,6 +696,148 @@
             <label>
               <span>Besoin de certificat RGPD / avis éthique</span>
               <input type="text" name="mr_ethics_need" placeholder="Ex : certification RGPD FR/EN, avis éthique..." />
+            </label>
+          </div>
+          <div id="mr004RegulatoryBlock">
+            <fieldset>
+              <legend>Catégories de données traitées — Données de santé</legend>
+              <div class="grid3">
+                <label class="checkline"><input type="checkbox" name="mr_data_pathology" /> <span>Description de la pathologie</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_treatments" /> <span>Description des traitements</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_genetics_somatic" /> <span>Données génétiques somatiques</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_genetics_germline" /> <span>Données génétiques constitutionnelles</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_imaging" /> <span>Données d’imagerie (DICOM)</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_slides" /> <span>Lames virtuelles d’anapath</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_samples" /> <span>Échantillons biologiques humains</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_pgeb_contacted" /> <span>Réutilisation d’échantillons CLB : PGEB contactée</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_health_other" id="mr_data_health_other" /> <span>Autres données de santé</span></label>
+              </div>
+            </fieldset>
+
+            <label id="mrDataHealthOtherWrap" style="display:none;">
+              <span>Autres données de santé — à préciser</span>
+              <textarea name="mr_data_health_other_txt" rows="2"></textarea>
+            </label>
+
+            <fieldset>
+              <legend>Catégories de données traitées — Données hors santé</legend>
+              <div class="grid2">
+                <label class="checkline"><input type="checkbox" name="mr_data_social" /> <span>Données sociales ou relatives au mode de vie (ex : SHS)</span></label>
+                <label class="checkline"><input type="checkbox" name="mr_data_nonhealth_other" id="mr_data_nonhealth_other" /> <span>Autres données hors santé</span></label>
+              </div>
+            </fieldset>
+
+            <label id="mrDataNonHealthOtherWrap" style="display:none;">
+              <span>Autres données hors santé — à préciser</span>
+              <textarea name="mr_data_nonhealth_other_txt" rows="2"></textarea>
+            </label>
+
+            <label>
+              <span>Schéma général des données (provenances, traitements, destinations)</span>
+              <textarea name="mr_data_schema" rows="3"></textarea>
+            </label>
+
+            <fieldset>
+              <legend>Fondement juridique du traitement de données</legend>
+              <label class="checkline"><input type="radio" name="mr_legal_basis" value="mission" /> <span>Exécution d’une mission d’intérêt public</span></label>
+              <label class="checkline"><input type="radio" name="mr_legal_basis" value="legitimate" /> <span>Poursuite d’un intérêt légitime</span></label>
+              <label class="checkline"><input type="radio" name="mr_legal_basis" value="legal_obligation" /> <span>Respect d’une obligation légale</span></label>
+              <label class="checkline"><input type="radio" name="mr_legal_basis" value="other" /> <span>Autre</span></label>
+            </fieldset>
+
+            <label id="mrLegalOtherWrap" style="display:none;">
+              <span>Autre fondement juridique — à préciser</span>
+              <textarea name="mr_legal_basis_other" rows="2"></textarea>
+            </label>
+
+            <div class="grid2">
+              <label>
+                <span>Ce contrat a-t-il été rédigé ?</span>
+                <input type="text" name="mr_contract_drafted" />
+              </label>
+
+              <label>
+                <span>Quelle équipe juridique du CLB l’a validé ?</span>
+                <input type="text" name="mr_contract_validated_by" />
+              </label>
+            </div>
+
+            <fieldset>
+              <legend>Données sensibles au-delà des données de santé</legend>
+              <label class="checkline"><input type="radio" name="mr_sensitive" value="yes" /> <span>Oui</span></label>
+              <label class="checkline"><input type="radio" name="mr_sensitive" value="no" /> <span>Non</span></label>
+            </fieldset>
+
+            <div id="mrSensitiveWrap2" style="display:none;">
+              <label>
+                <span>Si oui, lesquelles ?</span>
+                <textarea name="mr_sensitive_types" rows="2"></textarea>
+              </label>
+              <label>
+                <span>Justifiez le traitement de ces données sensibles</span>
+                <textarea name="mr_sensitive_justification" rows="2"></textarea>
+              </label>
+            </div>
+
+            <label>
+              <span>Questionnaires — outil utilisé si questionnaire par internet</span>
+              <textarea name="mr_questionnaire_tool" rows="2"></textarea>
+            </label>
+
+            <label>
+              <span>Pseudonymisation — méthode adaptée au niveau de risque</span>
+              <textarea name="mr_pseudonymisation" rows="3"></textarea>
+            </label>
+
+            <label>
+              <span>Si l’équipe connaît l’identité des patients : à quel moment et comment cette connaissance est supprimée ?</span>
+              <textarea name="mr_identity_removal" rows="2"></textarea>
+            </label>
+
+            <fieldset>
+              <legend>Durée de conservation des données</legend>
+              <label class="checkline"><input type="radio" name="mr_retention" value="cnil" /> <span>Je respecterai la consigne de la CNIL</span></label>
+              <label class="checkline"><input type="radio" name="mr_retention" value="other" /> <span>J’ai besoin d’une durée de conservation différente</span></label>
+            </fieldset>
+
+            <label id="mrRetentionWrap2" style="display:none;">
+              <span>Justification de la durée de conservation différente</span>
+              <textarea name="mr_retention_detail" rows="2"></textarea>
+            </label>
+
+            <fieldset>
+              <legend>Information des personnes concernées — Si les personnes concernées sont des patients</legend>
+              <label class="checkline"><input type="checkbox" name="mr_info_patient_level5" /> <span>Pour les patients du CLB, note d’information aux seuls patients ayant un niveau d’information &lt; 5</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_info_patient_notice" /> <span>Remise à chaque patient de la note d’information en présentiel ou par envoi postal</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_info_patient_other" id="mr_info_patient_other" /> <span>Autres méthodes</span></label>
+            </fieldset>
+
+            <label id="mrPatientInfoOtherWrap" style="display:none;">
+              <span>Autres méthodes d’information des patients — détaillez</span>
+              <textarea name="mr_info_patient_other_txt" rows="2"></textarea>
+            </label>
+
+            <fieldset>
+              <legend>Information des personnes concernées — Si les personnes concernées ne sont pas des patients</legend>
+              <label class="checkline"><input type="checkbox" name="mr_info_nonpatient_oral" /> <span>Information orale</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_info_nonpatient_written" /> <span>Notice écrite individuelle en présentiel ou via envoi postal</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_info_nonpatient_other" id="mr_info_nonpatient_other" /> <span>Autres méthodes</span></label>
+            </fieldset>
+
+            <label id="mrNonPatientInfoOtherWrap" style="display:none;">
+              <span>Autres méthodes d’information hors patients — détaillez</span>
+              <textarea name="mr_info_nonpatient_other_txt" rows="2"></textarea>
+            </label>
+
+            <fieldset>
+              <legend>Demande de certificat d’instruction et/ou d’avis éthique</legend>
+              <label class="checkline"><input type="checkbox" name="mr_ethics_certificate" /> <span>Je demande à recevoir le courrier « Certification d’instruction RGPD FR/EN »</span></label>
+              <label class="checkline"><input type="checkbox" name="mr_ethics_opinion" id="mr_ethics_opinion" /> <span>J’ai besoin d’un avis éthique sur mon projet de recherche</span></label>
+            </fieldset>
+
+            <label id="mrEthicsOpinionWrap" style="display:none;">
+              <span>Point éthique à soumettre au CMT</span>
+              <textarea name="mr_ethics_topic" rows="2"></textarea>
             </label>
           </div>
         </section>

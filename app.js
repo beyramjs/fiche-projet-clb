@@ -69,6 +69,7 @@ const aap = $("#aap");
 const q6Section = $("#q6Section");
 const q6Guidance = $("#q6Guidance");
 const mr004Block = $("#mr004Block");
+const mr004RegulatoryBlock = $("#mr004RegulatoryBlock");
 const cmtBlock = $("#cmtBlock");
 const mr004StateEl = $("#mr004State");
 const cmtStateEl = $("#cmtState");
@@ -76,12 +77,34 @@ const q6SiteOther = $("#q6_site_other");
 const q6SiteOtherWrap = $("#q6SiteOtherWrap");
 const mrPopulationOther = $("#mr_population_other");
 const mrPopulationOtherWrap = $("#mrPopulationOtherWrap");
+const mrTumorOther = $("#mr_tumor_other");
+const mrTumorOtherWrap = $("#mrTumorOtherWrap");
+const mrCaseOtherWrap = $("#mrCaseOtherWrap");
+const mrCase1Wrap = $("#mrCase1Wrap");
+const mrCase2Wrap = $("#mrCase2Wrap");
+const mrCase2to6Wrap = $("#mrCase2to6Wrap");
+const mrCase3to6Wrap = $("#mrCase3to6Wrap");
 const mrRetentionWrap = $("#mrRetentionWrap");
 const mrSensitiveWrap = $("#mrSensitiveWrap");
+const mrDataHealthOther = $("#mr_data_health_other");
+const mrDataHealthOtherWrap = $("#mrDataHealthOtherWrap");
+const mrDataNonHealthOther = $("#mr_data_nonhealth_other");
+const mrDataNonHealthOtherWrap = $("#mrDataNonHealthOtherWrap");
+const mrLegalOtherWrap = $("#mrLegalOtherWrap");
+const mrSensitiveWrap2 = $("#mrSensitiveWrap2");
+const mrRetentionWrap2 = $("#mrRetentionWrap2");
+const mrInfoPatientOther = $("#mr_info_patient_other");
+const mrPatientInfoOtherWrap = $("#mrPatientInfoOtherWrap");
+const mrInfoNonPatientOther = $("#mr_info_nonpatient_other");
+const mrNonPatientInfoOtherWrap = $("#mrNonPatientInfoOtherWrap");
+const mrEthicsOpinion = $("#mr_ethics_opinion");
+const mrEthicsOpinionWrap = $("#mrEthicsOpinionWrap");
 const cmtPfOther = $("#cmt_pf_other");
 const cmtPfOtherWrap = $("#cmtPfOtherWrap");
 
 const fundingTableBody = $("#fundingTable tbody");
+
+deconflictLegacyMr004Fields();
 
 $("#btnAddFunding").addEventListener("click", addFundingRow);
 $("#btnSave").addEventListener("click", saveLocal);
@@ -111,8 +134,23 @@ function handleConditionalFields() {
   if (q6Section) q6Section.style.display = showQ6 ? "block" : "none";
   if (q6SiteOtherWrap) q6SiteOtherWrap.style.display = q6SiteOther?.checked ? "block" : "none";
   if (mrPopulationOtherWrap) mrPopulationOtherWrap.style.display = mrPopulationOther?.checked ? "block" : "none";
+  if (mrTumorOtherWrap) mrTumorOtherWrap.style.display = mrTumorOther?.checked ? "block" : "none";
+  const mrCaseValue = form.elements.mr_case?.value || "";
+  if (mrCaseOtherWrap) mrCaseOtherWrap.style.display = mrCaseValue === "other" ? "block" : "none";
+  if (mrCase1Wrap) mrCase1Wrap.style.display = mrCaseValue === "1" ? "block" : "none";
+  if (mrCase2Wrap) mrCase2Wrap.style.display = mrCaseValue === "2" ? "block" : "none";
+  if (mrCase2to6Wrap) mrCase2to6Wrap.style.display = ["2", "3", "4", "5", "6"].includes(mrCaseValue) ? "block" : "none";
+  if (mrCase3to6Wrap) mrCase3to6Wrap.style.display = ["3", "4", "5", "6"].includes(mrCaseValue) ? "block" : "none";
   if (mrRetentionWrap) mrRetentionWrap.style.display = form.elements.mr_retention?.value === "Durée spécifique" ? "block" : "none";
   if (mrSensitiveWrap) mrSensitiveWrap.style.display = form.elements.mr_sensitive?.value === "Oui" ? "block" : "none";
+  if (mrDataHealthOtherWrap) mrDataHealthOtherWrap.style.display = mrDataHealthOther?.checked ? "block" : "none";
+  if (mrDataNonHealthOtherWrap) mrDataNonHealthOtherWrap.style.display = mrDataNonHealthOther?.checked ? "block" : "none";
+  if (mrLegalOtherWrap) mrLegalOtherWrap.style.display = form.elements.mr_legal_basis?.value === "other" ? "block" : "none";
+  if (mrSensitiveWrap2) mrSensitiveWrap2.style.display = form.elements.mr_sensitive?.value === "yes" ? "block" : "none";
+  if (mrRetentionWrap2) mrRetentionWrap2.style.display = form.elements.mr_retention?.value === "other" ? "block" : "none";
+  if (mrPatientInfoOtherWrap) mrPatientInfoOtherWrap.style.display = mrInfoPatientOther?.checked ? "block" : "none";
+  if (mrNonPatientInfoOtherWrap) mrNonPatientInfoOtherWrap.style.display = mrInfoNonPatientOther?.checked ? "block" : "none";
+  if (mrEthicsOpinionWrap) mrEthicsOpinionWrap.style.display = mrEthicsOpinion?.checked ? "block" : "none";
   if (cmtPfOtherWrap) cmtPfOtherWrap.style.display = cmtPfOther?.checked ? "block" : "none";
 
   const needMr004 = !!form.elements.trf_data?.checked;
@@ -129,8 +167,18 @@ function handleConditionalFields() {
       "trf_ech", "trf_data", "trf_multi",
       "q6_site_clb", "q6_site_ihope", "q6_site_other",
       "mr_population_patients", "mr_population_aidants", "mr_population_pros", "mr_population_other",
+      "mr_case_doc_risk", "mr_case_doc_notice", "mr_case_doc_ecrf",
+      "mr_tumor_all", "mr_tumor_brain", "mr_tumor_colorectal", "mr_tumor_stomach", "mr_tumor_liver",
+      "mr_tumor_small_intestine", "mr_tumor_eye", "mr_tumor_orl", "mr_tumor_bone", "mr_tumor_ovary",
+      "mr_tumor_pancreas", "mr_tumor_skin", "mr_tumor_pleura", "mr_tumor_lung", "mr_tumor_prostate",
+      "mr_tumor_kidney", "mr_tumor_hematology", "mr_tumor_breast", "mr_tumor_testicle", "mr_tumor_thyroid",
+      "mr_tumor_uterus", "mr_tumor_bladder", "mr_tumor_soft_tissue", "mr_tumor_other_solid",
+      "mr_tumor_unknown_primary", "mr_tumor_other",
       "mr_flow_ecrf", "mr_flow_owncloud", "mr_flow_mss",
-      "mr_data_pathology", "mr_data_treatments", "mr_data_genetics", "mr_data_imaging", "mr_data_slides", "mr_data_samples",
+      "mr_data_pathology", "mr_data_treatments", "mr_data_genetics_somatic", "mr_data_genetics_germline", "mr_data_imaging", "mr_data_slides", "mr_data_samples", "mr_data_pgeb_contacted", "mr_data_health_other", "mr_data_social", "mr_data_nonhealth_other",
+      "mr_info_patient_level5", "mr_info_patient_notice", "mr_info_patient_other",
+      "mr_info_nonpatient_oral", "mr_info_nonpatient_written", "mr_info_nonpatient_other",
+      "mr_ethics_certificate", "mr_ethics_opinion",
       "cmt_matching",
       "cmt_pf_biopath", "cmt_pf_par", "cmt_pf_pgeb", "cmt_pf_onco3d", "cmt_pf_pgc", "cmt_pf_pgt", "cmt_pf_licl", "cmt_pf_pathec", "cmt_pf_other"
     ].forEach((name) => {
@@ -139,9 +187,13 @@ function handleConditionalFields() {
     [
       "trf_zone", "trf_dest", "trf_desc", "trf_com",
       "q6_resp_scientifique", "q6_contact", "q6_site_other_txt", "q6_period", "q6_contract", "q6_objective",
-      "mr_population_other_txt", "mr_population_desc", "mr_population_counts", "mr_pathology", "mr_case", "mr_flow_other",
-      "mr_data_other", "mr_legal_basis", "mr_retention", "mr_retention_detail", "mr_sensitive", "mr_information_mode",
-      "mr_sensitive_detail", "mr_pseudonymisation", "mr_contract_status", "mr_ethics_need",
+      "mr_population_other_txt", "mr_population_desc", "mr_population_counts", "mr_tumor_other_txt", "mr_case", "mr_case_other_detail",
+      "mr_case1_internal_teams", "mr_case1_subcontractors", "mr_case1_stats_team",
+      "mr_case2_centers", "mr_case2_internal_teams", "mr_case2_subcontractors", "mr_case2_stats_team",
+      "mr_case36_internal_teams", "mr_case_host_country", "mr_case_collection_responsible", "mr_case_collection_tool", "mr_flow_other",
+      "mr_data_health_other_txt", "mr_data_nonhealth_other_txt", "mr_data_schema", "mr_legal_basis", "mr_legal_basis_other", "mr_retention", "mr_retention_detail", "mr_sensitive",
+      "mr_sensitive_types", "mr_sensitive_justification", "mr_questionnaire_tool", "mr_pseudonymisation", "mr_identity_removal", "mr_contract_drafted", "mr_contract_validated_by",
+      "mr_info_patient_other_txt", "mr_info_nonpatient_other_txt", "mr_ethics_topic",
       "cmt_clinician", "cmt_partnerships", "cmt_funding", "cmt_selection_note", "cmt_sample_type", "cmt_sample_site",
       "cmt_sample_pathology", "cmt_sample_count", "cmt_criteria_clinical", "cmt_criteria_quality", "cmt_summary",
       "cmt_data_list", "cmt_data_objective", "cmt_ethics_impact", "cmt_pf_other_txt"
@@ -167,6 +219,27 @@ function getQ6GuidanceMessage(showQ6, needMr004, needCmt) {
     return "Transfert d’échantillons détecté : la fiche CMT est requise. Seuls les champs projet partagés sont repris automatiquement.";
   }
   return "La Q6 est ouverte car la Q3 mentionne des données ou échantillons. Cochez le ou les transferts réellement nécessaires pour afficher la fiche MR004 et/ou la fiche CMT.";
+}
+
+function deconflictLegacyMr004Fields() {
+  if (!mr004Block || !mr004RegulatoryBlock) return;
+  const legacyNames = [
+    "mr_data_pathology", "mr_data_treatments", "mr_data_genetics", "mr_data_imaging", "mr_data_slides", "mr_data_samples",
+    "mr_data_other", "mr_legal_basis", "mr_retention", "mr_retention_detail", "mr_sensitive", "mr_information_mode",
+    "mr_sensitive_detail", "mr_pseudonymisation", "mr_contract_status", "mr_ethics_need"
+  ];
+  const hidden = new Set();
+  legacyNames.forEach((name) => {
+    mr004Block.querySelectorAll(`[name="${name}"]`).forEach((el) => {
+      if (mr004RegulatoryBlock.contains(el)) return;
+      el.name = `legacy_${name}`;
+      const container = el.closest("label, div, fieldset");
+      if (container && !hidden.has(container)) {
+        container.style.display = "none";
+        hidden.add(container);
+      }
+    });
+  });
 }
 
 function applyQ6Prefill() {
@@ -338,8 +411,17 @@ function getFormData() {
     "trf_ech","trf_data","trf_multi",
     "q6_site_clb","q6_site_ihope","q6_site_other",
     "mr_population_patients","mr_population_aidants","mr_population_pros","mr_population_other",
+    "mr_tumor_all","mr_tumor_brain","mr_tumor_colorectal","mr_tumor_stomach","mr_tumor_liver",
+    "mr_tumor_small_intestine","mr_tumor_eye","mr_tumor_orl","mr_tumor_bone","mr_tumor_ovary",
+    "mr_tumor_pancreas","mr_tumor_skin","mr_tumor_pleura","mr_tumor_lung","mr_tumor_prostate",
+    "mr_tumor_kidney","mr_tumor_hematology","mr_tumor_breast","mr_tumor_testicle","mr_tumor_thyroid",
+    "mr_tumor_uterus","mr_tumor_bladder","mr_tumor_soft_tissue","mr_tumor_other_solid",
+    "mr_tumor_unknown_primary","mr_tumor_other",
     "mr_flow_ecrf","mr_flow_owncloud","mr_flow_mss",
-    "mr_data_pathology","mr_data_treatments","mr_data_genetics","mr_data_imaging","mr_data_slides","mr_data_samples",
+    "mr_data_pathology","mr_data_treatments","mr_data_genetics_somatic","mr_data_genetics_germline","mr_data_imaging","mr_data_slides","mr_data_samples","mr_data_pgeb_contacted","mr_data_health_other","mr_data_social","mr_data_nonhealth_other",
+    "mr_info_patient_level5","mr_info_patient_notice","mr_info_patient_other",
+    "mr_info_nonpatient_oral","mr_info_nonpatient_written","mr_info_nonpatient_other",
+    "mr_ethics_certificate","mr_ethics_opinion",
     "cmt_matching",
     "cmt_pf_biopath","cmt_pf_par","cmt_pf_pgeb","cmt_pf_onco3d","cmt_pf_pgc","cmt_pf_pgt","cmt_pf_licl","cmt_pf_pathec","cmt_pf_other"
   ];
@@ -351,6 +433,14 @@ function getFormData() {
 
   // funding table rows
   obj.fundingHistory = readFundingTable();
+
+  obj.mr_legal_basis = mrLegalBasisText(obj);
+  obj.mr_retention = mrRetentionText(obj);
+  obj.mr_sensitive_detail = mrSensitiveText(obj);
+  obj.mr_information_mode = mrInformationText(obj);
+  obj.mr_contract_status = mrContractText(obj);
+  obj.mr_ethics_need = mrEthicsNeedText(obj);
+  obj.mr_data_other = obj.mr_data_schema || "";
 
   return obj;
 }
@@ -907,9 +997,9 @@ async function buildProjectPdfDoc(d) {
           ["Population", mrPopulationSelectedText(d)],
           ["Description population", safe(d.mr_population_desc)],
           ["Nombre concerné / CLB", safe(d.mr_population_counts)],
-          ["Pathologie / tumeur", safe(d.mr_pathology)],
-          ["Cas MR004", safe(d.mr_case)],
-          ["Circulation / recueil", mrFlowSelectedText(d, d.mr_flow_other)],
+          ["Pathologie / tumeur", mrTumorSelectedText(d)],
+          ["Cas MR004", mrCaseLabelText(d)],
+          ["Détails de catégorisation", mrCaseDetailsText(d)],
           ["Catégories de données", mrDataSelectedText(d, d.mr_data_other)],
           ["Fondement juridique", safe(d.mr_legal_basis)],
           ["Conservation", [safe(d.mr_retention), safe(d.mr_retention_detail)].filter(v => v !== "—").join(" — ") || "—"],
@@ -1112,7 +1202,7 @@ async function generateMr004Pdf(d = getFormData()) {
       ["Population concernee", mrPopulationSelectedText(d)],
       ["Description de la population", safe(d.mr_population_desc)],
       ["Nombre concerne / nombre CLB", safe(d.mr_population_counts)],
-      ["Type de tumeur / pathologie", safe(d.mr_pathology)],
+      ["Type de tumeur / pathologie", mrTumorSelectedText(d)],
       ["Description generale des flux", safe(d.trf_desc)],
     ],
     styles: { fontSize: 9, cellPadding: 2 },
@@ -1125,7 +1215,7 @@ async function generateMr004Pdf(d = getFormData()) {
     startY: doc.lastAutoTable.finalY + 5,
     head: [["Description RGPD et securite", ""]],
     body: [
-      ["Cas MR004 / categorisation", safe(d.mr_case)],
+      ["Cas MR004 / categorisation", mrCaseLabelText(d)],
       ["Mode de circulation des donnees", mrFlowSelectedText(d, d.mr_flow_other)],
       ["Categories de donnees traitees", mrDataSelectedText(d, d.mr_data_other)],
       ["Fondement juridique", safe(d.mr_legal_basis)],
@@ -1360,6 +1450,85 @@ function mrPopulationSelectedText(d) {
   return out.join(", ") || "—";
 }
 
+function mrTumorSelectedText(d) {
+  const map = [
+    ["mr_tumor_all", "Tout cancer"],
+    ["mr_tumor_brain", "Tumeur du cerveau"],
+    ["mr_tumor_colorectal", "Tumeur colorectale"],
+    ["mr_tumor_stomach", "Tumeur de l'estomac"],
+    ["mr_tumor_liver", "Tumeur du foie"],
+    ["mr_tumor_small_intestine", "Tumeur de l'intestin grêle"],
+    ["mr_tumor_eye", "Tumeur de l'œil"],
+    ["mr_tumor_orl", "Tumeur ORL / VADS"],
+    ["mr_tumor_bone", "Tumeur de l'os / cartilage"],
+    ["mr_tumor_ovary", "Tumeur de l'ovaire"],
+    ["mr_tumor_pancreas", "Tumeur du pancréas"],
+    ["mr_tumor_skin", "Tumeur de la peau"],
+    ["mr_tumor_pleura", "Tumeur de la plèvre"],
+    ["mr_tumor_lung", "Tumeur du poumon"],
+    ["mr_tumor_prostate", "Tumeur de la prostate"],
+    ["mr_tumor_kidney", "Tumeur du rein"],
+    ["mr_tumor_hematology", "Tumeur hématologique"],
+    ["mr_tumor_breast", "Tumeur du sein"],
+    ["mr_tumor_testicle", "Tumeur du testicule"],
+    ["mr_tumor_thyroid", "Tumeur thyroïde / endocrine"],
+    ["mr_tumor_uterus", "Tumeur col / endomètre"],
+    ["mr_tumor_bladder", "Tumeur de la vessie"],
+    ["mr_tumor_soft_tissue", "Tumeur des tissus mous"],
+    ["mr_tumor_other_solid", "Autres tumeurs solides"],
+    ["mr_tumor_unknown_primary", "Site primitif inconnu"],
+    ["mr_tumor_other", d.mr_tumor_other_txt || "Autre tumeur"],
+  ];
+  const out = map.filter(([k]) => d[k]).map(([, label]) => label);
+  return out.join(", ") || "—";
+}
+
+function mrCaseLabelText(d) {
+  const labels = {
+    "1": "Cas 1 : pilotage CLB / IHOPe, monocentrique",
+    "2": "Cas 2 : pilotage CLB / IHOPe, multicentrique",
+    "3": "Cas 3 : pilotage académique, hébergement UE",
+    "4": "Cas 4 : pilotage industriel, hébergement UE",
+    "5": "Cas 5 : hébergement hors UE avec décision d'adéquation",
+    "6": "Cas 6 : hébergement hors UE sans décision d'adéquation",
+    "other": "Autre cas à détailler",
+  };
+  return labels[d.mr_case] || "—";
+}
+
+function mrCaseDetailsText(d) {
+  const parts = [];
+  if (d.mr_case === "other" && d.mr_case_other_detail) parts.push(`Détail: ${d.mr_case_other_detail}`);
+  if (d.mr_case === "1") {
+    if (d.mr_case1_internal_teams) parts.push(`Équipes internes: ${d.mr_case1_internal_teams}`);
+    if (d.mr_case1_subcontractors) parts.push(`Sous-traitants: ${d.mr_case1_subcontractors}`);
+    if (d.mr_case1_stats_team) parts.push(`Statistiques: ${d.mr_case1_stats_team}`);
+  }
+  if (d.mr_case === "2") {
+    if (d.mr_case2_centers) parts.push(`Centres participants: ${d.mr_case2_centers}`);
+    if (d.mr_case2_internal_teams) parts.push(`Équipes internes: ${d.mr_case2_internal_teams}`);
+    if (d.mr_case2_subcontractors) parts.push(`Sous-traitants: ${d.mr_case2_subcontractors}`);
+    if (d.mr_case2_stats_team) parts.push(`Statistiques: ${d.mr_case2_stats_team}`);
+  }
+  if (["3", "4", "5", "6"].includes(d.mr_case || "")) {
+    if (d.mr_case36_internal_teams) parts.push(`Équipes internes: ${d.mr_case36_internal_teams}`);
+    const docs = [
+      d.mr_case_doc_risk ? "Analyse des risques / AIPD" : null,
+      d.mr_case_doc_notice ? "Note d'information" : null,
+      d.mr_case_doc_ecrf ? "E-CRF détaillé" : null,
+    ].filter(Boolean);
+    if (docs.length) parts.push(`Pièces jointes: ${docs.join(", ")}`);
+    if (d.mr_case_host_country) parts.push(`Pays d'hébergement: ${d.mr_case_host_country}`);
+  }
+  if (["2", "3", "4", "5", "6"].includes(d.mr_case || "")) {
+    const flow = mrFlowSelectedText(d, d.mr_flow_other);
+    if (flow !== "—") parts.push(`Circulation des données: ${flow}`);
+  }
+  if (d.mr_case_collection_responsible) parts.push(`Recueil des données: ${d.mr_case_collection_responsible}`);
+  if (d.mr_case_collection_tool) parts.push(`Outil / sécurité: ${d.mr_case_collection_tool}`);
+  return parts.join(" | ") || "—";
+}
+
 function mrFlowSelectedText(d, other) {
   const out = [
     d.mr_flow_ecrf ? "e-CRF" : null,
@@ -1381,6 +1550,89 @@ function mrDataSelectedText(d, other) {
     other || null,
   ].filter(Boolean);
   return out.join(", ") || "—";
+}
+
+function mrDataRegulatoryText(d) {
+  const out = [
+    d.mr_data_pathology ? "Description de la pathologie" : null,
+    d.mr_data_treatments ? "Description des traitements" : null,
+    d.mr_data_genetics_somatic ? "DonnÃ©es gÃ©nÃ©tiques somatiques" : null,
+    d.mr_data_genetics_germline ? "DonnÃ©es gÃ©nÃ©tiques constitutionnelles" : null,
+    d.mr_data_imaging ? "DonnÃ©es d'imagerie (DICOM)" : null,
+    d.mr_data_slides ? "Lames virtuelles d'anapath" : null,
+    d.mr_data_samples ? "Ã‰chantillons biologiques humains" : null,
+    d.mr_data_pgeb_contacted ? "PGEB du CLB contactÃ©e" : null,
+    d.mr_data_health_other ? (d.mr_data_health_other_txt || "Autres donnÃ©es de santÃ©") : null,
+    d.mr_data_social ? "DonnÃ©es sociales ou relatives au mode de vie" : null,
+    d.mr_data_nonhealth_other ? (d.mr_data_nonhealth_other_txt || "Autres donnÃ©es hors santÃ©") : null,
+  ].filter(Boolean);
+  if (d.mr_data_schema) out.push(`SchÃ©ma gÃ©nÃ©ral: ${d.mr_data_schema}`);
+  return out.join(", ") || "â€”";
+}
+
+function mrLegalBasisText(d) {
+  const labels = {
+    mission: "ExÃ©cution d'une mission d'intÃ©rÃªt public",
+    legitimate: "Poursuite d'un intÃ©rÃªt lÃ©gitime",
+    legal_obligation: "Respect d'une obligation lÃ©gale",
+    other: d.mr_legal_basis_other || "Autre fondement juridique",
+  };
+  return labels[d.mr_legal_basis] || "â€”";
+}
+
+function mrRetentionText(d) {
+  if (d.mr_retention === "cnil") return "Je respecterai la consigne de la CNIL";
+  if (d.mr_retention === "other") return d.mr_retention_detail ? `DurÃ©e diffÃ©rente : ${d.mr_retention_detail}` : "DurÃ©e diffÃ©rente Ã  justifier";
+  return "â€”";
+}
+
+function mrSensitiveText(d) {
+  if (d.mr_sensitive === "no") return "Non";
+  if (d.mr_sensitive === "yes") {
+    return [
+      "Oui",
+      d.mr_sensitive_types ? `Lesquelles: ${d.mr_sensitive_types}` : null,
+      d.mr_sensitive_justification ? `Justification: ${d.mr_sensitive_justification}` : null,
+    ].filter(Boolean).join(" | ");
+  }
+  return "â€”";
+}
+
+function mrInformationText(d) {
+  const patient = [
+    d.mr_info_patient_level5 ? "Patients CLB : note aux niveaux < 5" : null,
+    d.mr_info_patient_notice ? "Remise de la note d'information Ã  chaque patient" : null,
+    d.mr_info_patient_other ? (d.mr_info_patient_other_txt || "Autres mÃ©thodes patients") : null,
+  ].filter(Boolean);
+  const nonPatient = [
+    d.mr_info_nonpatient_oral ? "Information orale" : null,
+    d.mr_info_nonpatient_written ? "Notice Ã©crite individuelle" : null,
+    d.mr_info_nonpatient_other ? (d.mr_info_nonpatient_other_txt || "Autres mÃ©thodes hors patients") : null,
+  ].filter(Boolean);
+  const parts = [];
+  if (patient.length) parts.push(`Patients: ${patient.join(", ")}`);
+  if (nonPatient.length) parts.push(`Hors patients: ${nonPatient.join(", ")}`);
+  return parts.join(" | ") || "â€”";
+}
+
+function mrEthicsNeedText(d) {
+  const out = [
+    d.mr_ethics_certificate ? "Courrier Certification d'instruction RGPD FR/EN" : null,
+    d.mr_ethics_opinion ? `Avis Ã©thique CMT${d.mr_ethics_topic ? ` : ${d.mr_ethics_topic}` : ""}` : null,
+  ].filter(Boolean);
+  return out.join(" | ") || "â€”";
+}
+
+function mrContractText(d) {
+  const out = [
+    d.mr_contract_drafted ? `Contrat rÃ©digÃ© : ${d.mr_contract_drafted}` : null,
+    d.mr_contract_validated_by ? `Validation juridique CLB : ${d.mr_contract_validated_by}` : null,
+  ].filter(Boolean);
+  return out.join(" | ") || "â€”";
+}
+
+function mrDataSelectedText(d, other) {
+  return mrDataRegulatoryText(d);
 }
 
 function cmtPlatformsSelectedText(d) {
@@ -1553,14 +1805,14 @@ async function buildMr004PdfDoc(d = getFormData()) {
   y = drawFieldBox(doc, y, "Description de la population", safe(d.mr_population_desc), 18);
   y = drawTwoColumnFields(doc, y, [
     ["Nombre concerné", safe(d.mr_population_counts)],
-    ["Type de tumeur / pathologie", safe(d.mr_pathology)],
+    ["Type de tumeur / pathologie", mrTumorSelectedText(d)],
   ]);
   y = drawFieldBox(doc, y, "Période concernée", safe(d.q6_period || derivePeriod(d)), 10);
 
   y = drawSectionHeader(doc, y, "II. Description RGPD et sécurité");
-  y = drawFieldBox(doc, y, "Catégorisation du projet (cas 1 à 6 ou autre)", safe(d.mr_case), 12);
+  y = drawFieldBox(doc, y, "Catégorisation du projet (cas 1 à 6 ou autre)", mrCaseLabelText(d), 12);
+  y = drawFieldBox(doc, y, "Questions conditionnelles selon le cas choisi", mrCaseDetailsText(d), 20);
   y = drawFieldBox(doc, y, "Centres / sites / partenaires concernés", [q6SitesSelectedText(d), partnerTypesText(d), safe(d.coord)].filter(v => v !== "—").join(" ; ") || "—", 12);
-  y = drawFieldBox(doc, y, "Circulation des données / outil de recueil / hébergement", mrFlowSelectedText(d, d.mr_flow_other), 16);
   y = drawFieldBox(doc, y, "Catégories de données traitées", mrDataSelectedText(d, d.mr_data_other), 18);
   y = drawFieldBox(doc, y, "Fondement juridique", safe(d.mr_legal_basis), 10);
   y = drawFieldBox(doc, y, "Durée de conservation des données", [safe(d.mr_retention), safe(d.mr_retention_detail)].filter(v => v !== "—").join(" — ") || "—", 12);
