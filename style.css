@@ -272,6 +272,61 @@ input:focus, select:focus, textarea:focus{
   border: 1px solid rgba(229,231,235,.9);
 }
 
+.modal{
+  border: 1px solid rgba(229,231,235,.95);
+  border-radius: 18px;
+  padding: 14px;
+  width: min(980px, calc(100vw - 24px));
+}
+
+.modal::backdrop{
+  background: rgba(15,23,42,.45);
+  backdrop-filter: blur(2px);
+}
+
+.modalHead{
+  display:flex;
+  align-items:flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.modalActions{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  margin-bottom: 10px;
+}
+
+.tableWrap{
+  max-height: 58vh;
+  overflow:auto;
+  border: 1px solid rgba(229,231,235,.95);
+  border-radius: 14px;
+}
+
+.registryTable{
+  width:100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.registryTable th,
+.registryTable td{
+  padding: 10px 10px;
+  border-bottom: 1px solid rgba(229,231,235,.95);
+  vertical-align: top;
+}
+
+.registryTable th{
+  position: sticky;
+  top: 0;
+  background: #fff;
+  z-index: 1;
+  text-align:left;
+}
+
 .toc{
   display:flex;
   flex-wrap: wrap;

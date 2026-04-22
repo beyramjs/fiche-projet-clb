@@ -36,21 +36,12 @@
       <div id="alerts" class="alerts" aria-live="polite"></div>
 
       <div class="actions">
-        <button type="button" id="btnSave">Sauvegarder</button>
-        <button type="button" id="btnLoad">Charger</button>
-        <button type="button" id="btnReset" class="secondary">Réinitialiser</button>
-        <button type="button" id="btnPdf" class="primary">Générer fiche projet PDF</button>
-        <button type="button" id="btnQ6Docs" class="secondary">Générer fiche(s) MR004 / CMT</button>
-        <button type="button" id="btnMailMr004" class="secondary">Envoyer fiche MR004</button>
-        <button type="button" id="btnMailCmt" class="secondary">Envoyer fiche CMT</button>
-        <button type="button" id="btnExportRegistry" class="secondary">Exporter registre (CSV)</button>
-        <select id="registrySelect" class="secondary" style="max-width:260px;">
-          <option value="">Charger depuis le registre…</option>
-        </select>
-        <button type="button" id="btnLoadFromRegistry" class="secondary">Charger</button>
-        <button type="button" id="btnExportJson" class="secondary">Exporter fiche (JSON)</button>
-        <button type="button" id="btnImportJson" class="secondary">Importer fiche (JSON)</button>
-        <input type="file" id="fileImportJson" accept="application/json" style="display:none;" />
+        <button type="button" id="btnSave" class="secondary">Sauvegarder</button>
+        <button type="button" id="btnGenerateProject" class="primary">Générer la fiche projet</button>
+        <button type="button" id="btnGenerateCmt" class="secondary">Fiche CMT</button>
+        <button type="button" id="btnGenerateMr004" class="secondary">MR004</button>
+        <button type="button" id="btnSendCmtDoc" class="secondary">Envoyer la fiche CMT en DOC</button>
+        <button type="button" id="btnSendMr004Doc" class="secondary">Envoyer la MR004 en DOC</button>
       </div>
 
       <nav class="toc" aria-label="Navigation">
@@ -69,6 +60,39 @@
       <p class="small" id="localModeHint"></p>
       <p class="small" id="lastSaved"></p>
     </header>
+
+    <dialog id="registryModal" class="modal">
+      <div class="modalHead">
+        <div>
+          <h3 style="margin:0;">Registre des projets</h3>
+          <p class="small" style="margin:4px 0 0;">
+            Ce registre est consultable ici. Export "Excel" via CSV. En mode local, il est aussi écrit dans <code>data/</code>.
+          </p>
+        </div>
+        <button type="button" id="btnRegistryClose" class="secondary">Fermer</button>
+      </div>
+
+      <div class="modalActions">
+        <button type="button" id="btnExportRegistry2" class="secondary">Télécharger registre (CSV / Excel)</button>
+      </div>
+
+      <div class="tableWrap">
+        <table class="registryTable">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Titre</th>
+              <th>Porteur</th>
+              <th>MR004</th>
+              <th>CMT</th>
+              <th>MAJ</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="registryTbody"></tbody>
+        </table>
+      </div>
+    </dialog>
 
     <form id="ficheForm" class="stack" autocomplete="on">
 

@@ -1,10 +1,13 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from tempfile import NamedTemporaryFile
 import cgi
 import json
 import os
 import mimetypes
+import csv
+import subprocess
+import sys
 import traceback
 import zipfile
 import xml.etree.ElementTree as ET
@@ -16,17 +19,60 @@ HOST = "127.0.0.1"
 PORT = 8765
 DATA_DIR = Path(__file__).with_name("data")
 REGISTRY_PATH = DATA_DIR / "projects_registry.json"
+REGISTRY_CSV_PATH = DATA_DIR / "projects_registry.csv"
+OUTBOX_DIR = DATA_DIR / "outbox"
+PROJECTS_DIR = DATA_DIR / "projects"
+WORKER_PATH = Path(__file__).with_name("outlook_send_worker.py")
 
 
 def send_via_outlook(to_address: str, subject: str, body: str, attachments: list[Path]) -> None:
-    outlook = win32com.client.Dispatch("Outlook.Application")
-    mail = outlook.CreateItem(0)
-    mail.To = to_address
-    mail.Subject = subject
-    mail.Body = body
-    for attachment in attachments:
-      mail.Attachments.Add(str(attachment))
-    mail.Send()
+    """Run Outlook automation in a dedicated worker process (fresh interpreter).
+    This avoids freezing the HTTP server when Outlook/COM hangs.
+    """
+    if not WORKER_PATH.exists():
+        raise RuntimeError(f"Worker manquant: {WORKER_PATH.name}")
+
+    payload = {
+        "to": to_address,
+        "subject": subject,
+        "body": body,
+        "attachments": [str(a) for a in attachments],
+    }
+
+    try:
+        completed = subprocess.run(
+            [sys.executable, str(WORKER_PATH)],
+            input=json.dumps(payload).encode("utf-8"),
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            timeout=25,
+        )
+    except subprocess.TimeoutExpired as exc:
+        raise RuntimeError(
+            "Outlook ne repond pas (timeout). Fermez Outlook completement puis relancez-le (pas en admin), puis reessayez."
+        ) from exc
+
+    if completed.returncode == 0:
+        return
+
+    err = (completed.stdout.decode("utf-8", errors="ignore") + "\n" + completed.stderr.decode("utf-8", errors="ignore")).strip()
+    err = err or f"Erreur Outlook (code {completed.returncode})"
+
+    if (
+        "-2146959355" in err
+        or "Échec de l’exécution du serveur" in err
+        or "Echec de l'execution du serveur" in err
+        or "Echec de l’execution du serveur" in err
+    ):
+        raise RuntimeError(
+            "Outlook ne peut pas etre automatise sur ce PC (echec COM).\n"
+            "Actions recommandees :\n"
+            "1) Fermez Outlook completement (toutes les fenetres), puis relancez Outlook normalement (pas en administrateur).\n"
+            "2) Reessayez.\n"
+            "3) Si ca bloque encore : redemarrez Windows.\n"
+        )
+
+    raise RuntimeError(err)
 
 
 def _ensure_data_dir() -> None:
@@ -48,6 +94,14 @@ def _load_registry() -> list[dict]:
 def _save_registry(items: list[dict]) -> None:
     _ensure_data_dir()
     REGISTRY_PATH.write_text(json.dumps(items, ensure_ascii=False, indent=2), encoding="utf-8")
+
+    # Also keep a CSV beside the JSON so Excel users can open it directly.
+    headers = ["code","created_at","updated_at","source","titre","porteur","email","unite","mr004","cmt","zone"]
+    with REGISTRY_CSV_PATH.open("w", encoding="utf-8", newline="") as f:
+        w = csv.DictWriter(f, fieldnames=headers, extrasaction="ignore")
+        w.writeheader()
+        for r in items:
+            w.writerow({h: r.get(h, "") for h in headers})
 
 
 def _upsert_registry_row(row: dict) -> None:
@@ -259,6 +313,8 @@ class OutlookBridgeHandler(BaseHTTPRequestHandler):
             return self._handle_send_mail()
         if self.path == "/send-docx":
             return self._handle_send_docx()
+        if self.path == "/generate-docx":
+            return self._handle_generate_docx()
         if self.path == "/registry/upsert":
             return self._handle_registry_upsert()
         self._send_json(404, {"error": "Route inconnue"})
@@ -400,6 +456,44 @@ class OutlookBridgeHandler(BaseHTTPRequestHandler):
                 except OSError:
                     pass
 
+    def _handle_generate_docx(self) -> None:
+        temp_files: list[Path] = []
+        try:
+            raw = self.rfile.read(int(self.headers.get("Content-Length", "0") or "0"))
+            payload = json.loads(raw.decode("utf-8"))
+            doc_type = str(payload.get("docType", "")).strip().lower()
+            data = payload.get("data") or {}
+
+            if doc_type not in ("mr004", "cmt"):
+                self._send_json(400, {"error": "docType invalide (mr004|cmt)"})
+                return
+            if not isinstance(data, dict):
+                self._send_json(400, {"error": "data invalide"})
+                return
+
+            if doc_type == "mr004":
+                temp_files.append(generate_mr004_docx(data))
+                filename = "MR004.docx"
+            else:
+                temp_files.append(generate_cmt_docx(data))
+                filename = "CMT.docx"
+
+            b = temp_files[0].read_bytes()
+            self.send_response(200)
+            self.send_header("Content-Type", "application/vnd.openxmlformats-officedocument.wordprocessingml.document")
+            self.send_header("Content-Disposition", f'attachment; filename="{filename}"')
+            self.send_header("Content-Length", str(len(b)))
+            self.end_headers()
+            self.wfile.write(b)
+        except Exception as exc:
+            self._send_json(500, {"error": str(exc), "trace": traceback.format_exc()})
+        finally:
+            for path in temp_files:
+                try:
+                    os.unlink(path)
+                except OSError:
+                    pass
+
     def _handle_send_mail(self) -> None:
         if self.path != "/send-mail":
             self._send_json(404, {"error": "Route inconnue"})
@@ -464,7 +558,7 @@ class OutlookBridgeHandler(BaseHTTPRequestHandler):
 
 
 if __name__ == "__main__":
-    server = HTTPServer((HOST, PORT), OutlookBridgeHandler)
+    server = ThreadingHTTPServer((HOST, PORT), OutlookBridgeHandler)
     print(f"Outlook mail bridge running on http://{HOST}:{PORT}")
     try:
         server.serve_forever()

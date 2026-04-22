@@ -47,9 +47,10 @@ const form = $("#ficheForm");
 const alertsEl = $("#alerts");
 const lastSavedEl = $("#lastSaved");
 const projectCodeBadge = $("#projectCodeBadge");
-const registrySelect = $("#registrySelect");
-const btnLoadFromRegistry = $("#btnLoadFromRegistry");
-const btnImportJson = $("#btnImportJson");
+const registryModal = $("#registryModal");
+const btnRegistryClose = $("#btnRegistryClose");
+const registryTbody = $("#registryTbody");
+const btnExportRegistry2 = $("#btnExportRegistry2");
 const localModeHint = $("#localModeHint");
 
 // Some strings were introduced via copy/paste from Word/PDF and can end up mojibake-encoded.
@@ -157,19 +158,22 @@ const fundingTableBody = $("#fundingTable tbody");
 deconflictLegacyMr004Fields();
 normalizeFormPresentation();
 
-$("#btnAddFunding").addEventListener("click", addFundingRow);
-$("#btnSave").addEventListener("click", saveLocal);
-$("#btnLoad").addEventListener("click", loadLocal);
-$("#btnReset").addEventListener("click", resetAll);
-$("#btnPdf").addEventListener("click", generatePdf);
-$("#btnQ6Docs").addEventListener("click", generateQ6Documents);
-$("#btnMailMr004").addEventListener("click", () => sendDocumentEmailAutomaticallyLegacy("mr004"));
-$("#btnMailCmt").addEventListener("click", () => sendDocumentEmailAutomaticallyLegacy("cmt"));
-$("#btnExportRegistry").addEventListener("click", exportRegistryCsv);
-btnLoadFromRegistry?.addEventListener("click", loadFromRegistrySelection);
-$("#btnExportJson").addEventListener("click", exportCurrentProjectJson);
-$("#fileImportJson")?.addEventListener("change", importProjectJsonFromFile);
-btnImportJson?.addEventListener("click", () => $("#fileImportJson")?.click());
+$("#btnAddFunding")?.addEventListener("click", addFundingRow);
+$("#btnSave")?.addEventListener("click", () => {
+  // Save to local registry and open the registry modal to allow re-opening/editing later.
+  const d = getFormData();
+  upsertRegistryRow(d, "save");
+  openRegistryModal();
+});
+
+$("#btnGenerateProject")?.addEventListener("click", generatePdf);
+$("#btnGenerateCmt")?.addEventListener("click", () => downloadDocx("cmt"));
+$("#btnGenerateMr004")?.addEventListener("click", () => downloadDocx("mr004"));
+$("#btnSendCmtDoc")?.addEventListener("click", () => sendDocumentEmailAutomaticallyLegacy("cmt"));
+$("#btnSendMr004Doc")?.addEventListener("click", () => sendDocumentEmailAutomaticallyLegacy("mr004"));
+
+btnExportRegistry2?.addEventListener("click", exportRegistryCsv);
+btnRegistryClose?.addEventListener("click", closeRegistryModal);
 
 form.addEventListener("input", () => {
   handleConditionalFields();
@@ -211,6 +215,40 @@ async function initLocalModeHintsAndBridge() {
     }
   } catch {
     bridgeMode = { available: false, baseUrl: "" };
+  }
+}
+
+async function downloadDocx(docType) {
+  const d = requireCoreProjectData();
+  if (!d) return;
+
+  if (location.protocol === "https:") {
+    alert(
+      "Generation Word indisponible depuis GitHub Pages (HTTPS).\n\n" +
+      "Solution : lancez le service local puis ouvrez http://127.0.0.1:8765/"
+    );
+    return;
+  }
+
+  try {
+    const payload = { docType, data: getFormData() };
+    const res = await fetch("/generate-docx", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error || `HTTP ${res.status}`);
+    }
+    const blob = await res.blob();
+    const filename = docType === "mr004"
+      ? `MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.docx`
+      : `CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.docx`;
+    downloadBlob(blob, filename);
+    upsertRegistryRow(d, docType === "mr004" ? "generate_mr004_docx" : "generate_cmt_docx");
+  } catch (e) {
+    alert(`Generation Word impossible: ${e.message}`);
   }
 }
 
@@ -607,6 +645,7 @@ function upsertRegistryRow(d, source = "manual") {
   localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
   renderProjectCodeBadge();
   refreshRegistryPicker();
+  renderRegistryTableIfOpen();
 
   // Also persist to disk registry if the local bridge is available
   persistRegistryRowToBridge(row).catch(() => {});
@@ -636,30 +675,92 @@ function exportRegistryCsv() {
 }
 
 function refreshRegistryPicker() {
-  if (!registrySelect) return;
-  const registry = getRegistry();
-  const current = registrySelect.value;
-  registrySelect.innerHTML = `<option value="">Charger depuis le registre…</option>`;
-  registry.forEach((r) => {
-    const opt = document.createElement("option");
-    opt.value = r.code || "";
-    const title = [r.code, r.titre].filter(Boolean).join(" — ");
-    opt.textContent = title || r.code || "(sans code)";
-    registrySelect.appendChild(opt);
-  });
-  if (current) registrySelect.value = current;
+  // Kept for backward compatibility (older UI had a select). Now we only use the modal table.
 }
 
-function loadFromRegistrySelection() {
-  const code = String(registrySelect?.value || "").trim();
-  if (!code) return;
+function openRegistryModal() {
+  if (!registryModal) return;
+  registryModal.showModal();
+  renderRegistryTable();
+}
 
-  // Prefer disk registry if bridge available
+function closeRegistryModal() {
+  if (!registryModal) return;
+  registryModal.close();
+}
+
+function renderRegistryTableIfOpen() {
+  if (!registryModal) return;
+  if (!registryModal.open) return;
+  renderRegistryTable();
+}
+
+async function renderRegistryTable() {
+  if (!registryTbody) return;
+  registryTbody.innerHTML = "";
+
+  let rows = [];
   if (bridgeMode.available) {
-    loadSnapshotFromBridge(code).catch((err) => {
-      alert(`Chargement impossible depuis le registre disque: ${err.message}`);
-    });
+    const res = await fetch("/registry/list");
+    rows = (await res.json().catch(() => [])) || [];
+  } else {
+    rows = getRegistry();
+  }
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    const tr = document.createElement("tr");
+    tr.innerHTML = `<td colspan="7" class="small" style="padding:14px;">Aucun projet pour le moment.</td>`;
+    registryTbody.appendChild(tr);
     return;
+  }
+
+  rows.forEach((r) => {
+    const tr = document.createElement("tr");
+    const code = String(r.code || "").trim();
+    const updated = String(r.updated_at || "").slice(0, 16).replace("T", " ");
+    tr.innerHTML = `
+      <td>${escapeHtml(code)}</td>
+      <td>${escapeHtml(r.titre || "")}</td>
+      <td>${escapeHtml(r.porteur || "")}</td>
+      <td>${r.mr004 ? "Oui" : "Non"}</td>
+      <td>${r.cmt ? "Oui" : "Non"}</td>
+      <td>${escapeHtml(updated)}</td>
+      <td><button type="button" class="secondary" data-open-code="${escapeAttr(code)}">Ouvrir</button></td>
+    `;
+    registryTbody.appendChild(tr);
+  });
+}
+
+function escapeHtml(s) {
+  return String(s || "")
+    .replaceAll("&", "&amp;")
+    .replaceAll("<", "&lt;")
+    .replaceAll(">", "&gt;")
+    .replaceAll('"', "&quot;");
+}
+
+function escapeAttr(s) {
+  return escapeHtml(s).replaceAll("'", "&#39;");
+}
+
+registryTbody?.addEventListener("click", (e) => {
+  const btn = e.target?.closest?.("[data-open-code]");
+  if (!btn) return;
+  const code = String(btn.getAttribute("data-open-code") || "").trim();
+  if (!code) return;
+  loadProjectByCode(code);
+});
+
+async function loadProjectByCode(code) {
+  if (bridgeMode.available) {
+    try {
+      await loadSnapshotFromBridge(code);
+      closeRegistryModal();
+      return;
+    } catch (err) {
+      alert(`Chargement impossible: ${err.message}`);
+      return;
+    }
   }
 
   const registry = getRegistry();
@@ -674,7 +775,8 @@ function loadFromRegistrySelection() {
   recomputeAll();
   saveLocal();
   upsertRegistryRow(getFormData(), "load_registry");
-  showAlert(`Projet ${code} chargé depuis le registre.`, "ok");
+  closeRegistryModal();
+  showAlert(`Projet ${code} chargé.`, "ok");
 }
 
 async function persistRegistryRowToBridge(row) {
@@ -687,6 +789,9 @@ async function persistRegistryRowToBridge(row) {
 }
 
 async function refreshRegistryPickerFromBridge() {
+  // Older UI had a select picker. Now we only use the modal table.
+  renderRegistryTableIfOpen();
+  return;
   if (!registrySelect) return;
   const res = await fetch("/registry/list");
   if (!res.ok) return;
