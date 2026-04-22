@@ -36,6 +36,8 @@ const ZONE_SCORE = {
 };
 
 const fundingSources = ["Institutionnel", "Industriel", "Fondation", "Europe", "Autre"];
+const MAIL_RECIPIENT = "beyram.frigui@lyon.unicancer.fr";
+const MAIL_SERVICE_URL = "http://127.0.0.1:8765/send-mail";
 
 const $ = (sel) => document.querySelector(sel);
 
@@ -87,6 +89,7 @@ $("#btnLoad").addEventListener("click", loadLocal);
 $("#btnReset").addEventListener("click", resetAll);
 $("#btnPdf").addEventListener("click", generatePdf);
 $("#btnQ6Docs").addEventListener("click", generateQ6Documents);
+$("#btnMail").addEventListener("click", sendProjectEmailAutomatically);
 
 form.addEventListener("input", () => {
   handleConditionalFields();
@@ -683,10 +686,14 @@ function applyDataToForm(d) {
    PDF generation
 ---------------------------- */
 async function generatePdf() {
-  // basic required check
   const d = requireCoreProjectData();
   if (!d) return;
+  const doc = await buildProjectPdfDoc(d);
+  const filename = `FicheProjet_CLB_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`;
+  doc.save(filename);
+}
 
+async function buildProjectPdfDoc(d) {
   const q1 = computeQ1(d);
   const q2 = computeQ2(d);
   const q3 = computeQ3(d);
@@ -957,8 +964,7 @@ async function generatePdf() {
   doc.text("Date :", 130, finalY);
   doc.line(142, finalY, 195, finalY);
 
-  const filename = `FicheProjet_CLB_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`;
-  doc.save(filename);
+  return doc;
 }
 
 async function generateQ6Documents() {
@@ -972,6 +978,82 @@ async function generateQ6Documents() {
 
   if (d.trf_data) await generateMr004Pdf(d);
   if (d.trf_ech) await generateCmtPdf(d);
+}
+
+async function sendProjectEmailAutomatically() {
+  const d = requireCoreProjectData();
+  if (!d) return;
+
+  try {
+    const attachments = [];
+
+    const projectDoc = await buildProjectPdfDoc(d);
+    attachments.push({
+      filename: `FicheProjet_CLB_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
+      blob: projectDoc.output("blob"),
+    });
+
+    if (d.trf_data) {
+      const mrDoc = await buildMr004PdfDoc(d);
+      attachments.push({
+        filename: `MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
+        blob: mrDoc.output("blob"),
+      });
+    }
+
+    if (d.trf_ech) {
+      const cmtDoc = await buildCmtPdfDoc(d);
+      attachments.push({
+        filename: `CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
+        blob: cmtDoc.output("blob"),
+      });
+    }
+
+    const formData = new FormData();
+    formData.append("to", MAIL_RECIPIENT);
+    formData.append("subject", d.titre || "Fiche projet CLB");
+    formData.append("body", buildAutomaticEmailBody(d));
+    attachments.forEach((file, index) => {
+      formData.append(`attachment_${index}`, file.blob, file.filename);
+    });
+
+    const response = await fetch(MAIL_SERVICE_URL, {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.error || `Erreur HTTP ${response.status}`);
+    }
+
+    alert(`Email envoyé automatiquement à ${MAIL_RECIPIENT}.`);
+  } catch (error) {
+    alert(
+      "Envoi automatique impossible.\n\n" +
+      "Vérifiez que le service local Outlook est démarré avec :\n" +
+      "python .\\outlook_mail_bridge.py\n\n" +
+      `Détail : ${error.message}`
+    );
+  }
+}
+
+function buildAutomaticEmailBody(d) {
+  return [
+    "Bonjour,",
+    "",
+    "Veuillez trouver ci-joint les documents générés pour la fiche projet.",
+    "",
+    `Titre du projet : ${d.titre || "—"}`,
+    `Porteur : ${d.porteur || "—"}`,
+    `Email porteur : ${d.email || "—"}`,
+    `Unité : ${d.unite || "—"}`,
+    `Partenaires / coordination : ${[partnerTypesText(d), safe(d.coord)].filter(v => v !== "—").join(" ; ") || "—"}`,
+    `Transfert de données : ${d.trf_data ? "Oui" : "Non"}`,
+    `Transfert d'échantillons : ${d.trf_ech ? "Oui" : "Non"}`,
+    "",
+    "Cordialement,",
+  ].join("\n");
 }
 
 function requireCoreProjectData() {
@@ -1438,6 +1520,11 @@ function drawSignatureArea(doc, y, title) {
 }
 
 async function generateMr004Pdf(d = getFormData()) {
+  const doc = await buildMr004PdfDoc(d);
+  doc.save(`MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`);
+}
+
+async function buildMr004PdfDoc(d = getFormData()) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await tryAddLogoToPdf(doc);
@@ -1495,10 +1582,15 @@ async function generateMr004Pdf(d = getFormData()) {
   y = drawFieldBox(doc, y, "Axe valorisation de la donnée / partage des données à l'issue du projet", "", 24);
 
   drawSignatureArea(doc, y, "Signature porteur");
-  doc.save(`MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`);
+  return doc;
 }
 
 async function generateCmtPdf(d = getFormData()) {
+  const doc = await buildCmtPdfDoc(d);
+  doc.save(`CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`);
+}
+
+async function buildCmtPdfDoc(d = getFormData()) {
   const { jsPDF } = window.jspdf;
   const doc = new jsPDF({ unit: "mm", format: "a4" });
   await tryAddLogoToPdf(doc);
@@ -1557,7 +1649,7 @@ async function generateCmtPdf(d = getFormData()) {
   y = drawFieldBox(doc, y, "Commentaires / réserves / suivi", safe(d.trf_com), 22);
 
   drawSignatureArea(doc, y, "Pour le Comité Médico-Technique");
-  doc.save(`CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`);
+  return doc;
 }
 
 /* ---------------------------
