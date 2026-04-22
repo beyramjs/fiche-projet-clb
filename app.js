@@ -113,7 +113,8 @@ $("#btnLoad").addEventListener("click", loadLocal);
 $("#btnReset").addEventListener("click", resetAll);
 $("#btnPdf").addEventListener("click", generatePdf);
 $("#btnQ6Docs").addEventListener("click", generateQ6Documents);
-$("#btnMail").addEventListener("click", sendProjectEmailAutomatically);
+$("#btnMailMr004").addEventListener("click", () => sendDocumentEmailAutomatically("mr004"));
+$("#btnMailCmt").addEventListener("click", () => sendDocumentEmailAutomatically("cmt"));
 
 form.addEventListener("input", () => {
   handleConditionalFields();
@@ -1089,20 +1090,24 @@ async function generateQ6Documents() {
   if (d.trf_ech) await generateCmtPdf(d);
 }
 
-async function sendProjectEmailAutomatically() {
+async function sendDocumentEmailAutomaticallyLegacy(docType) {
   const d = requireCoreProjectData();
   if (!d) return;
+
+  if (docType === "mr004" && !d.trf_data) {
+    alert("Cochez d'abord 'Transfert de données' dans la Q6 pour envoyer la fiche MR004.");
+    return;
+  }
+
+  if (docType === "cmt" && !d.trf_ech) {
+    alert("Cochez d'abord 'Transfert d'échantillons biologiques' dans la Q6 pour envoyer la fiche CMT.");
+    return;
+  }
 
   try {
     const attachments = [];
 
-    const projectDoc = await buildProjectPdfDoc(d);
-    attachments.push({
-      filename: `FicheProjet_CLB_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
-      blob: projectDoc.output("blob"),
-    });
-
-    if (d.trf_data) {
+    if (docType === "mr004") {
       const mrDoc = await buildMr004PdfDoc(d);
       attachments.push({
         filename: `MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
@@ -1110,7 +1115,7 @@ async function sendProjectEmailAutomatically() {
       });
     }
 
-    if (d.trf_ech) {
+    if (docType === "cmt") {
       const cmtDoc = await buildCmtPdfDoc(d);
       attachments.push({
         filename: `CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
@@ -1120,8 +1125,8 @@ async function sendProjectEmailAutomatically() {
 
     const formData = new FormData();
     formData.append("to", MAIL_RECIPIENT);
-    formData.append("subject", d.titre || "Fiche projet CLB");
-    formData.append("body", buildAutomaticEmailBody(d));
+    formData.append("subject", `${docType === "mr004" ? "MR004" : "CMT"} - ${d.titre || "Fiche projet CLB"}`);
+    formData.append("body", buildDocumentEmailBody(d, docType));
     attachments.forEach((file, index) => {
       formData.append(`attachment_${index}`, file.blob, file.filename);
     });
@@ -1145,6 +1150,83 @@ async function sendProjectEmailAutomatically() {
       `Détail : ${error.message}`
     );
   }
+}
+
+async function sendDocumentEmailAutomatically(docType) {
+  const d = requireCoreProjectData();
+  if (!d) return;
+
+  if (docType === "mr004" && !d.trf_data) {
+    alert("Cochez d'abord 'Transfert de données' dans la Q6 pour envoyer la fiche MR004.");
+    return;
+  }
+
+  if (docType === "cmt" && !d.trf_ech) {
+    alert("Cochez d'abord 'Transfert d'échantillons biologiques' dans la Q6 pour envoyer la fiche CMT.");
+    return;
+  }
+
+  try {
+    const attachments = [];
+
+    if (docType === "mr004") {
+      const mrDoc = await buildMr004PdfDoc(d);
+      attachments.push({
+        filename: `MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
+        blob: mrDoc.output("blob"),
+      });
+    }
+
+    if (docType === "cmt") {
+      const cmtDoc = await buildCmtPdfDoc(d);
+      attachments.push({
+        filename: `CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
+        blob: cmtDoc.output("blob"),
+      });
+    }
+
+    const formData = new FormData();
+    formData.append("to", MAIL_RECIPIENT);
+    formData.append("subject", `${docType === "mr004" ? "MR004" : "CMT"} - ${d.titre || "Fiche projet CLB"}`);
+    formData.append("body", buildDocumentEmailBody(d, docType));
+    attachments.forEach((file, index) => {
+      formData.append(`attachment_${index}`, file.blob, file.filename);
+    });
+
+    const response = await fetch(MAIL_SERVICE_URL, {
+      method: "POST",
+      body: formData,
+    });
+
+    const result = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      throw new Error(result.error || `Erreur HTTP ${response.status}`);
+    }
+
+    alert(`Fiche ${docType === "mr004" ? "MR004" : "CMT"} envoyée automatiquement à ${MAIL_RECIPIENT}.`);
+  } catch (error) {
+    alert(
+      "Envoi automatique impossible.\n\n" +
+      "Vérifiez que le service local Outlook est démarré avec :\n" +
+      "python .\\outlook_mail_bridge.py\n\n" +
+      `Détail : ${error.message}`
+    );
+  }
+}
+
+function buildDocumentEmailBody(d, docType) {
+  const docLabel = docType === "mr004" ? "fiche MR004" : "fiche CMT";
+  return [
+    "Bonjour,",
+    "",
+    `Veuillez trouver ci-joint la ${docLabel} générée pour le projet.`,
+    "",
+    `Titre du projet : ${d.titre || "—"}`,
+    `Porteur : ${d.porteur || "—"}`,
+    `Email : ${d.email || "—"}`,
+    "",
+    "Cordialement,",
+  ].join("\n");
 }
 
 function buildAutomaticEmailBody(d) {
