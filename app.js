@@ -8,6 +8,7 @@
    =========================== */
 
 const LS_KEY = "ficheProjet_v1";
+const REGISTRY_KEY = "ficheProjet_registry_v1";
 
 // Seuils labels (Q3 / Q5) modifiables ici
 const Q3_LABEL_THRESHOLDS = [
@@ -38,12 +39,59 @@ const ZONE_SCORE = {
 const fundingSources = ["Institutionnel", "Industriel", "Fondation", "Europe", "Autre"];
 const MAIL_RECIPIENT = "beyram.frigui@lyon.unicancer.fr";
 const MAIL_SERVICE_URL = "http://127.0.0.1:8765/send-mail";
+const MAIL_SERVICE_DOCX_URL = "http://127.0.0.1:8765/send-docx";
 
 const $ = (sel) => document.querySelector(sel);
 
 const form = $("#ficheForm");
 const alertsEl = $("#alerts");
 const lastSavedEl = $("#lastSaved");
+const projectCodeBadge = $("#projectCodeBadge");
+const registrySelect = $("#registrySelect");
+const btnLoadFromRegistry = $("#btnLoadFromRegistry");
+
+// Some strings were introduced via copy/paste from Word/PDF and can end up mojibake-encoded.
+// We normalize at render/export time so the UI/PDF stays clean even if a few literals slip in.
+function fixText(v) {
+  if (typeof v !== "string") return v;
+  let s = v;
+  const rep = [
+    ["Ã¢â‚¬â€", "—"],
+    ["â€”", "—"],
+    ["â€“", "–"],
+    ["â€™", "’"],
+    ["Â ", ""],
+
+    ["ÃƒÂ©", "é"],
+    ["ÃƒÂ¨", "è"],
+    ["ÃƒÂª", "ê"],
+    ["ÃƒÂ«", "ë"],
+    ["ÃƒÂ ", "à"],
+    ["ÃƒÂ¢", "â"],
+    ["ÃƒÂ´", "ô"],
+    ["ÃƒÂ®", "î"],
+    ["ÃƒÂ¯", "ï"],
+    ["ÃƒÂ§", "ç"],
+    ["Ãƒâ€°", "É"],
+    ["ÃƒÅ“", "Œ"],
+    ["ÃƒÅ“", "Œ"],
+    ["Å“", "œ"],
+
+    ["Ã©", "é"],
+    ["Ã¨", "è"],
+    ["Ãª", "ê"],
+    ["Ã«", "ë"],
+    ["Ã ", "à"],
+    ["Ã¢", "â"],
+    ["Ã´", "ô"],
+    ["Ã®", "î"],
+    ["Ã¯", "ï"],
+    ["Ã§", "ç"],
+    ["Ã‰", "É"],
+  ];
+  for (const [from, to] of rep) s = s.split(from).join(to);
+  return s;
+}
 
 const q1ScoreEl = $("#q1Score");
 const q1VigEl = $("#q1Vigilance");
@@ -66,7 +114,7 @@ const finCp = $("#fin_cp");
 
 const aapWrap = $("#aapWrap");
 const aap = $("#aap");
-const q6Section = $("#q6Section");
+const q6Section = $("#q6");
 const q6Guidance = $("#q6Guidance");
 const mr004Block = $("#mr004Block");
 const mr004RegulatoryBlock = $("#mr004RegulatoryBlock");
@@ -113,8 +161,12 @@ $("#btnLoad").addEventListener("click", loadLocal);
 $("#btnReset").addEventListener("click", resetAll);
 $("#btnPdf").addEventListener("click", generatePdf);
 $("#btnQ6Docs").addEventListener("click", generateQ6Documents);
-$("#btnMailMr004").addEventListener("click", () => sendDocumentEmailAutomatically("mr004"));
-$("#btnMailCmt").addEventListener("click", () => sendDocumentEmailAutomatically("cmt"));
+$("#btnMailMr004").addEventListener("click", () => sendDocumentEmailAutomaticallyLegacy("mr004"));
+$("#btnMailCmt").addEventListener("click", () => sendDocumentEmailAutomaticallyLegacy("cmt"));
+$("#btnExportRegistry").addEventListener("click", exportRegistryCsv);
+btnLoadFromRegistry?.addEventListener("click", loadFromRegistrySelection);
+$("#btnExportJson").addEventListener("click", exportCurrentProjectJson);
+$("#fileImportJson")?.addEventListener("change", importProjectJsonFromFile);
 
 form.addEventListener("input", () => {
   handleConditionalFields();
@@ -126,11 +178,15 @@ form.addEventListener("change", () => {
   recomputeAll();
 });
 
+ensureProjectCode();
+renderProjectCodeBadge();
+refreshRegistryPicker();
+
 function handleConditionalFields() {
-  autresWrap.style.display = zAutres?.checked ? "block" : "none";
-  pfAutreWrap.style.display = pfAutre?.checked ? "block" : "none";
-  cpWrap.style.display = finCp?.checked ? "block" : "none";
-  aapWrap.style.display = aap?.checked ? "grid" : "none";
+  if (autresWrap) autresWrap.style.display = zAutres?.checked ? "block" : "none";
+  if (pfAutreWrap) pfAutreWrap.style.display = pfAutre?.checked ? "block" : "none";
+  if (cpWrap) cpWrap.style.display = finCp?.checked ? "block" : "none";
+  if (aapWrap) aapWrap.style.display = aap?.checked ? "grid" : "none";
 
   const showQ6 = !!(form.elements.act_data?.checked || form.elements.act_ech?.checked);
   if (q6Section) q6Section.style.display = showQ6 ? "block" : "none";
@@ -447,12 +503,12 @@ function getFormData() {
   // funding table rows
   obj.fundingHistory = readFundingTable();
 
-  obj.mr_legal_basis = mrLegalBasisText(obj);
-  obj.mr_retention = mrRetentionText(obj);
-  obj.mr_sensitive_detail = mrSensitiveText(obj);
-  obj.mr_information_mode = mrInformationText(obj);
-  obj.mr_contract_status = mrContractText(obj);
-  obj.mr_ethics_need = mrEthicsNeedText(obj);
+  obj.mr_legal_basis = fixText(mrLegalBasisText(obj));
+  obj.mr_retention = fixText(mrRetentionText(obj));
+  obj.mr_sensitive_detail = fixText(mrSensitiveText(obj));
+  obj.mr_information_mode = fixText(mrInformationText(obj));
+  obj.mr_contract_status = fixText(mrContractText(obj));
+  obj.mr_ethics_need = fixText(mrEthicsNeedText(obj));
   obj.mr_data_other = obj.mr_data_schema || "";
   obj.cmt_criteria_quality = [obj.cmt_criteria_quantitative, obj.cmt_criteria_quality_detail || obj.cmt_criteria_quality].filter(Boolean).join(" | ");
   if (obj.cmt_matching_detail) {
@@ -463,6 +519,157 @@ function getFormData() {
   }
 
   return obj;
+}
+
+function ensureProjectCode() {
+  if (!form) return "";
+  let code = String(localStorage.getItem("ficheProjet_current_code") || "").trim();
+  if (!code) {
+    const now = new Date();
+    const y = now.getFullYear();
+    const m = String(now.getMonth() + 1).padStart(2, "0");
+    const d = String(now.getDate()).padStart(2, "0");
+    const r = Math.random().toString(36).slice(2, 6).toUpperCase();
+    code = `FP-${y}${m}${d}-${r}`;
+    localStorage.setItem("ficheProjet_current_code", code);
+  }
+  return code;
+}
+
+function renderProjectCodeBadge() {
+  if (!projectCodeBadge) return;
+  projectCodeBadge.textContent = ensureProjectCode() || "—";
+}
+
+function getRegistry() {
+  try {
+    const raw = localStorage.getItem(REGISTRY_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function upsertRegistryRow(d, source = "manual") {
+  const code = ensureProjectCode();
+  const nowIso = new Date().toISOString();
+  const registry = getRegistry();
+  const row = {
+    code,
+    created_at: registry.find((r) => r.code === code)?.created_at || nowIso,
+    updated_at: nowIso,
+    source,
+    titre: d.titre || "",
+    porteur: d.porteur || "",
+    email: d.email || "",
+    unite: d.unite || "",
+    mr004: !!d.trf_data,
+    cmt: !!d.trf_ech,
+    zone: d.trf_zone || "",
+    snapshot: d, // full form state for re-opening/editing later
+  };
+  const idx = registry.findIndex((r) => r.code === code);
+  if (idx >= 0) registry[idx] = row;
+  else registry.unshift(row);
+  localStorage.setItem(REGISTRY_KEY, JSON.stringify(registry));
+  renderProjectCodeBadge();
+  refreshRegistryPicker();
+}
+
+function exportRegistryCsv() {
+  const registry = getRegistry();
+  const headers = ["code","created_at","updated_at","source","titre","porteur","email","unite","mr004","cmt","zone"];
+  const lines = [headers.join(",")];
+  registry.forEach((r) => {
+    const vals = headers.map((h) => {
+      const v = r[h];
+      const s = (v === undefined || v === null) ? "" : String(v);
+      // CSV escaping
+      return `"${s.replaceAll('"', '""')}"`;
+    });
+    lines.push(vals.join(","));
+  });
+  const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+  downloadBlob(blob, `registre_projets_${new Date().toISOString().slice(0,10)}.csv`);
+}
+
+function refreshRegistryPicker() {
+  if (!registrySelect) return;
+  const registry = getRegistry();
+  const current = registrySelect.value;
+  registrySelect.innerHTML = `<option value="">Charger depuis le registre…</option>`;
+  registry.forEach((r) => {
+    const opt = document.createElement("option");
+    opt.value = r.code || "";
+    const title = [r.code, r.titre].filter(Boolean).join(" — ");
+    opt.textContent = title || r.code || "(sans code)";
+    registrySelect.appendChild(opt);
+  });
+  if (current) registrySelect.value = current;
+}
+
+function loadFromRegistrySelection() {
+  const code = String(registrySelect?.value || "").trim();
+  if (!code) return;
+  const registry = getRegistry();
+  const row = registry.find((r) => r.code === code);
+  if (!row || !row.snapshot) {
+    alert("Projet introuvable dans le registre (ou snapshot manquant).");
+    return;
+  }
+  localStorage.setItem("ficheProjet_current_code", code);
+  applyDataToForm(row.snapshot);
+  handleConditionalFields();
+  recomputeAll();
+  saveLocal();
+  upsertRegistryRow(getFormData(), "load_registry");
+  showAlert(`Projet ${code} chargé depuis le registre.`, "ok");
+}
+
+function exportCurrentProjectJson() {
+  const d = getFormData();
+  const payload = {
+    code: ensureProjectCode(),
+    exported_at: new Date().toISOString(),
+    data: d,
+  };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json;charset=utf-8" });
+  downloadBlob(blob, `fiche_projet_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}_${payload.code}.json`);
+  upsertRegistryRow(d, "export_json");
+}
+
+async function importProjectJsonFromFile(e) {
+  const file = e.target?.files?.[0];
+  if (!file) return;
+  try {
+    const text = await file.text();
+    const parsed = JSON.parse(text);
+    const data = parsed?.data || parsed;
+    if (!data || typeof data !== "object") throw new Error("Fichier JSON invalide");
+    const code = String(parsed?.code || data?.code || "").trim();
+    if (code) localStorage.setItem("ficheProjet_current_code", code);
+    applyDataToForm(data);
+    handleConditionalFields();
+    recomputeAll();
+    saveLocal();
+    upsertRegistryRow(getFormData(), "import_json");
+  } catch (err) {
+    alert(`Import impossible : ${err.message}`);
+  } finally {
+    e.target.value = "";
+  }
+}
+
+function downloadBlob(blob, filename) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1500);
 }
 
 function toNumber(v) {
@@ -746,6 +953,8 @@ function saveLocal() {
     data: d
   };
   localStorage.setItem(LS_KEY, JSON.stringify(payload));
+  upsertRegistryRow(d, "save_local");
+  renderProjectCodeBadge();
   showLastSaved(payload.savedAt);
   alert("Sauvegarde locale effectuée ✅");
 }
@@ -758,6 +967,8 @@ function loadLocal() {
   }
   const payload = JSON.parse(raw);
   applyDataToForm(payload.data || {});
+  if (payload?.data && typeof payload.data === "object") upsertRegistryRow(getFormData(), "load_local");
+  renderProjectCodeBadge();
   showLastSaved(payload.savedAt);
   handleConditionalFields();
   recomputeAll();
@@ -769,6 +980,8 @@ function resetAll() {
   form.reset();
   fundingTableBody.innerHTML = "";
   localStorage.removeItem(LS_KEY);
+  localStorage.removeItem("ficheProjet_current_code");
+  renderProjectCodeBadge();
   lastSavedEl.textContent = "";
   handleConditionalFields();
   recomputeAll();
@@ -801,6 +1014,7 @@ async function generatePdf() {
   const doc = await buildProjectPdfDoc(d);
   const filename = `FicheProjet_CLB_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`;
   doc.save(filename);
+  upsertRegistryRow(d, "generate_project_pdf");
 }
 
 async function buildProjectPdfDoc(d) {
@@ -1088,6 +1302,7 @@ async function generateQ6Documents() {
 
   if (d.trf_data) await generateMr004Pdf(d);
   if (d.trf_ech) await generateCmtPdf(d);
+  upsertRegistryRow(d, "generate_q6_pdfs");
 }
 
 async function sendDocumentEmailAutomaticallyLegacy(docType) {
@@ -1105,41 +1320,26 @@ async function sendDocumentEmailAutomaticallyLegacy(docType) {
   }
 
   try {
-    const attachments = [];
+    const payload = {
+      to: MAIL_RECIPIENT,
+      subject: `${docType === "mr004" ? "MR004" : "CMT"} - ${d.titre || "Fiche projet CLB"}`,
+      body: buildDocumentEmailBody(d, docType),
+      docType,
+      data: getFormData(),
+    };
 
-    if (docType === "mr004") {
-      const mrDoc = await buildMr004PdfDoc(d);
-      attachments.push({
-        filename: `MR004_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
-        blob: mrDoc.output("blob"),
-      });
-    }
-
-    if (docType === "cmt") {
-      const cmtDoc = await buildCmtPdfDoc(d);
-      attachments.push({
-        filename: `CMT_${slugify(d.porteur || "porteur")}_${slugify(d.titre || "projet")}.pdf`,
-        blob: cmtDoc.output("blob"),
-      });
-    }
-
-    const formData = new FormData();
-    formData.append("to", MAIL_RECIPIENT);
-    formData.append("subject", `${docType === "mr004" ? "MR004" : "CMT"} - ${d.titre || "Fiche projet CLB"}`);
-    formData.append("body", buildDocumentEmailBody(d, docType));
-    attachments.forEach((file, index) => {
-      formData.append(`attachment_${index}`, file.blob, file.filename);
-    });
-
-    const response = await fetch(MAIL_SERVICE_URL, {
+    const response = await fetch(MAIL_SERVICE_DOCX_URL, {
       method: "POST",
-      body: formData,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
     });
 
     const result = await response.json().catch(() => ({}));
     if (!response.ok) {
       throw new Error(result.error || `Erreur HTTP ${response.status}`);
     }
+    upsertRegistryRow(d, docType === "mr004" ? "send_mr004_docx" : "send_cmt_docx");
+    upsertRegistryRow(d, docType === "mr004" ? "send_mr004" : "send_cmt");
 
     alert(`Email envoyé automatiquement à ${MAIL_RECIPIENT}.`);
   } catch (error) {
@@ -1272,6 +1472,8 @@ async function generateMr004Pdf(d = getFormData()) {
   doc.text("Declaration d'un traitement de donnees - MR004", 14, y);
   y += 6;
   doc.setFontSize(10);
+  doc.text(`Code projet : ${ensureProjectCode()}`, 14, y);
+  y += 5;
   doc.text("Version PDF issue de la fiche projet CLB", 14, y);
 
   doc.autoTable({
@@ -1612,7 +1814,7 @@ function mrFlowSelectedText(d, other) {
   return out.join(", ") || "—";
 }
 
-function mrDataSelectedText(d, other) {
+function mrDataSelectedTextLegacy(d, other) {
   const out = [
     d.mr_data_pathology ? "Pathologie" : null,
     d.mr_data_treatments ? "Traitements" : null,
@@ -1705,7 +1907,7 @@ function mrContractText(d) {
 }
 
 function mrDataSelectedText(d, other) {
-  return mrDataRegulatoryText(d);
+  return fixText(mrDataRegulatoryText(d));
 }
 
 function cmtPlatformsSelectedText(d) {
