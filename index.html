@@ -42,6 +42,11 @@
         <button type="button" id="btnGenerateMr004" class="secondary">MR004</button>
         <button type="button" id="btnSendCmtDoc" class="secondary">Envoyer la fiche CMT en DOC</button>
         <button type="button" id="btnSendMr004Doc" class="secondary">Envoyer la MR004 en DOC</button>
+        <button type="button" id="btnExportProjectJson" class="secondary">Télécharger la fiche modifiable</button>
+        <label class="secondary fileAction">
+          Importer une fiche
+          <input type="file" id="projectJsonInput" accept="application/json,.json" hidden />
+        </label>
       </div>
 
       <nav class="toc" aria-label="Navigation">
@@ -531,7 +536,7 @@
               <input type="text" name="mr_population_counts" placeholder="Ex : 250 au total, 140 CLB" />
             </label>
 
-            <label>
+            <label style="display:none;">
               <span>Type de tumeur / pathologie</span>
               <select name="mr_tumor_type" id="mr_tumor_type">
                 <option value="">—</option>
@@ -564,7 +569,7 @@
               </select>
             </label>
 
-            <fieldset class="fieldset" id="mrTumorLegacyFieldset" style="display:none;">
+            <fieldset class="fieldset" id="mrTumorLegacyFieldset">
               <legend>Type de tumeur / pathologie</legend>
               <div class="grid3">
                 <label class="checkline"><input type="checkbox" name="mr_tumor_all" /> <span>Tout cancer</span></label>

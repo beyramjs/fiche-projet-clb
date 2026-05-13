@@ -51,6 +51,8 @@ const registryModal = $("#registryModal");
 const btnRegistryClose = $("#btnRegistryClose");
 const registryTbody = $("#registryTbody");
 const btnExportRegistry2 = $("#btnExportRegistry2");
+const btnExportProjectJson = $("#btnExportProjectJson");
+const projectJsonInput = $("#projectJsonInput");
 const localModeHint = $("#localModeHint");
 
 // Some strings were introduced via copy/paste from Word/PDF and can end up mojibake-encoded.
@@ -173,6 +175,8 @@ $("#btnSendCmtDoc")?.addEventListener("click", () => sendDocumentEmailAutomatica
 $("#btnSendMr004Doc")?.addEventListener("click", () => sendDocumentEmailAutomaticallyLegacy("mr004"));
 
 btnExportRegistry2?.addEventListener("click", exportRegistryCsv);
+btnExportProjectJson?.addEventListener("click", exportCurrentProjectJson);
+projectJsonInput?.addEventListener("change", importProjectJsonFromFile);
 btnRegistryClose?.addEventListener("click", closeRegistryModal);
 
 form.addEventListener("input", () => {
@@ -556,6 +560,7 @@ function getFormData() {
     "trf_ech","trf_data","trf_multi",
     "q6_site_clb","q6_site_ihope","q6_site_other",
     "mr_population_patients","mr_population_aidants","mr_population_pros","mr_population_other",
+    "mr_tumor_all","mr_tumor_brain","mr_tumor_colorectal","mr_tumor_stomach","mr_tumor_liver","mr_tumor_small_intestine","mr_tumor_eye","mr_tumor_orl","mr_tumor_bone","mr_tumor_ovary","mr_tumor_pancreas","mr_tumor_skin","mr_tumor_pleura","mr_tumor_lung","mr_tumor_prostate","mr_tumor_kidney","mr_tumor_hematology","mr_tumor_breast","mr_tumor_testicle","mr_tumor_thyroid","mr_tumor_uterus","mr_tumor_bladder","mr_tumor_soft_tissue","mr_tumor_other_solid","mr_tumor_unknown_primary","mr_tumor_other",
     "mr_flow_ecrf","mr_flow_owncloud","mr_flow_mss",
     "mr_data_pathology","mr_data_treatments","mr_data_genetics_somatic","mr_data_genetics_germline","mr_data_imaging","mr_data_slides","mr_data_samples","mr_data_pgeb_contacted","mr_data_health_other","mr_data_social","mr_data_nonhealth_other",
     "mr_info_patient_level5","mr_info_patient_notice","mr_info_patient_other",
